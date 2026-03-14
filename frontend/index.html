@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bibliothèque DIT</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui; }
+    body { background: #f1f5f9; color: #1e293b; }
+    header {
+      background: #0f2044; color: white;
+      padding: 1rem 2rem; display: flex;
+      align-items: center; justify-content: space-between;
+    }
+    header h1 { font-size: 1.3rem; }
+    nav a {
+      color: #93c5fd; text-decoration: none;
+      margin-left: 1.5rem; font-size: 0.95rem; cursor: pointer;
+    }
+    nav a:hover { color: white; }
+    .container { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
+    .page { display: none; }
+    .page.active { display: block; }
+    h2 { font-size: 1.2rem; margin-bottom: 1rem; color: #0f2044; }
+    .card {
+      background: white; border-radius: 12px;
+      padding: 1.2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      border-left: 4px solid #0f766e;
+    }
+    .card h3 { font-size: 1rem; margin-bottom: 0.3rem; color: #0f2044; }
+    .card .auteur { color: #64748b; font-size: 0.9rem; margin-bottom: 0.5rem; }
+    .card .isbn { color: #94a3b8; font-size: 0.8rem; margin-bottom: 0.8rem; }
+    .badge { padding: 3px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; }
+    .badge.dispo { background: #d1fae5; color: #065f46; }
+    .badge.emprunte { background: #fee2e2; color: #991b1b; }
+    .btn { border: none; border-radius: 8px; padding: 0.4rem 0.9rem; cursor: pointer; font-size: 0.85rem; margin-top: 0.6rem; margin-right: 0.3rem; }
+    .btn-emprunter { background: #0f766e; color: white; }
+    .btn-retour    { background: #f59e0b; color: white; }
+    .btn-supprimer { background: #ef4444; color: white; }
+    .btn:hover { opacity: 0.85; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>📚 Bibliothèque Numérique — DIT</h1>
+    <nav>
+      <a onclick="showPage('catalogue')">Catalogue</a>
+      <a onclick="showPage('ajouter')">Ajouter un livre</a>
+    </nav>
+  </header>
+
+  <div class="container">
+
+    <!-- PAGE CATALOGUE -->
+    <div id="catalogue" class="page active">
+      <h2>Catalogue des livres</h2>
+      <input
+        type="text" id="search"
+        placeholder="🔍 Rechercher par titre, auteur ou ISBN..."
+        oninput="filtrer()"
+        style="width:100%;padding:0.8rem 1rem;border:1px solid #e2e8f0;border-radius:10px;font-size:1rem;margin-bottom:1.5rem;outline:none;"
+      >
+      <div id="livres-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem;"></div>
+    </div>
+
+    <!-- PAGE AJOUTER -->
+    <div id="ajouter" class="page">
+      <h2>Ajouter un nouveau livre</h2>
+      <div style="max-width: 500px;">
+
+        <!-- Message de confirmation/erreur -->
+        <div id="msg" style="display:none; padding:0.8rem 1rem; border-radius:8px; margin-bottom:1rem; font-weight:bold;"></div>
+
+        <!-- Champ Titre -->
+        <div style="margin-bottom: 1rem;">
+          <label style="display:block; font-weight:bold; margin-bottom:0.4rem; color:#0f2044;">
+            Titre <span style="color:red">*</span>
+          </label>
+          <input
+            type="text" id="f-titre"
+            placeholder="Ex: Python avancé"
+            style="width:100%; padding:0.7rem 1rem; border:1px solid #e2e8f0; border-radius:8px; font-size:1rem; outline:none;"
+          >
+        </div>
+
+        <!-- Champ Auteur -->
+        <div style="margin-bottom: 1rem;">
+          <label style="display:block; font-weight:bold; margin-bottom:0.4rem; color:#0f2044;">
+            Auteur <span style="color:red">*</span>
+          </label>
+          <input
+            type="text" id="f-auteur"
+            placeholder="Ex: Jean Dupont"
+            style="width:100%; padding:0.7rem 1rem; border:1px solid #e2e8f0; border-radius:8px; font-size:1rem; outline:none;"
+          >
+        </div>
+
+        <!-- Champ ISBN -->
+        <div style="margin-bottom: 1.5rem;">
+          <label style="display:block; font-weight:bold; margin-bottom:0.4rem; color:#0f2044;">
+            ISBN <span style="color:#94a3b8; font-weight:normal;">(optionnel)</span>
+          </label>
+          <input
+            type="text" id="f-isbn"
+            placeholder="Ex: 978-2-0001-2345-6"
+            style="width:100%; padding:0.7rem 1rem; border:1px solid #e2e8f0; border-radius:8px; font-size:1rem; outline:none;"
+          >
+        </div>
+
+        <!-- Bouton -->
+        <button
+          onclick="ajouterLivre()"
+          style="
+            background: #0f766e; color: white;
+            border: none; border-radius: 10px;
+            padding: 0.8rem 2rem; font-size: 1rem;
+            cursor: pointer; width: 100%;
+            font-weight: bold;
+          "
+        >
+          ➕ Ajouter le livre
+        </button>
+
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const API = 'http://localhost:8001';
+    let tousLivres = [];
+
+    function showPage(id) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+    async function ajouterLivre() {
+      const titre  = document.getElementById('f-titre').value.trim();
+      const auteur = document.getElementById('f-auteur').value.trim();
+      const isbn   = document.getElementById('f-isbn').value.trim();
+      const msg    = document.getElementById('msg');
+
+      // Validation
+      if (!titre || !auteur) {
+        msg.style.display = 'block';
+        msg.style.background = '#fee2e2';
+        msg.style.color = '#991b1b';
+        msg.textContent = '⚠ Titre et auteur sont obligatoires !';
+        return;
+      }
+
+      const res = await fetch(API + '/api/livres', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ titre, auteur, isbn: isbn || null })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        // Succès
+        msg.style.display = 'block';
+        msg.style.background = '#d1fae5';
+        msg.style.color = '#065f46';
+        msg.textContent = `✅ "${titre}" ajouté avec succès !`;
+
+        // Vider le formulaire
+        document.getElementById('f-titre').value  = '';
+        document.getElementById('f-auteur').value = '';
+        document.getElementById('f-isbn').value   = '';
+
+        // Recharger le catalogue
+        chargerLivres();
+
+      } else {
+        // Erreur
+        msg.style.display = 'block';
+        msg.style.background = '#fee2e2';
+        msg.style.color = '#991b1b';
+        msg.textContent = `❌ Erreur : ${data.error}`;
+      }
+    }
+    async function chargerLivres() {
+      try {
+        const res = await fetch(API + '/api/livres');
+        tousLivres = await res.json();
+        afficherLivres(tousLivres);
+      } catch (e) {
+        document.getElementById('livres-grid').innerHTML =
+          '<p style="color:red">Erreur : impossible de contacter le service Livres.</p>';
+      }
+    }
+
+    function afficherLivres(livres) {
+      const grid = document.getElementById('livres-grid');
+      if (livres.length === 0) {
+        grid.innerHTML = '<p style="color:#64748b">Aucun livre trouvé.</p>';
+        return;
+      }
+      grid.innerHTML = livres.map(l => `
+        <div class="card">
+          <h3>${l.titre}</h3>
+          <p class="auteur">✍ ${l.auteur}</p>
+          ${l.isbn ? `<p class="isbn">ISBN : ${l.isbn}</p>` : ''}
+          <span class="badge ${l.disponible ? 'dispo' : 'emprunte'}">
+            ${l.disponible ? '✅ Disponible' : '❌ Emprunté'}
+          </span><br>
+          ${l.disponible
+            ? `<button class="btn btn-emprunter" onclick="emprunter(${l.id})">Emprunter</button>`
+            : `<button class="btn btn-retour" onclick="retourner(${l.id})">Retourner</button>`
+          }
+          <button class="btn btn-supprimer" onclick="supprimer(${l.id})">Supprimer</button>
+        </div>
+      `).join('');
+    }
+
+    function filtrer() {
+      const q = document.getElementById('search').value.toLowerCase();
+      afficherLivres(tousLivres.filter(l =>
+        l.titre.toLowerCase().includes(q) ||
+        l.auteur.toLowerCase().includes(q) ||
+        (l.isbn && l.isbn.toLowerCase().includes(q))
+      ));
+    }
+
+    async function emprunter(id) {
+      await fetch(`${API}/api/livres/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ disponible: false })
+      });
+      chargerLivres();
+    }
+
+    async function retourner(id) {
+      await fetch(`${API}/api/livres/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ disponible: true })
+      });
+      chargerLivres();
+    }
+
+    async function supprimer(id) {
+      if (!confirm('Supprimer ce livre ?')) return;
+      await fetch(`${API}/api/livres/${id}`, { method: 'DELETE' });
+      chargerLivres();
+    }
+
+    chargerLivres();
+  </script>
+
+</body>
+</html>
