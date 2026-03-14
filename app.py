@@ -41,6 +41,23 @@ class Livre(db.Model):
 # Créer la table automatiquement au démarrage
 with app.app_context():
     db.create_all()
+# Créer la table avec retry (attend que PostgreSQL soit prêt)
+import time
+
+def init_db():
+    retries = 5
+    while retries > 0:
+        try:
+            with app.app_context():
+                db.create_all()
+            print("✅ Base de données connectée avec succès !")
+            break
+        except Exception as e:
+            retries -= 1
+            print(f"⏳ BDD pas encore prête... tentative restantes : {retries}")
+            time.sleep(3)
+
+init_db()    
 #######BLOCK4
 # ─────────────────────────────────────────
 # ROUTE 1 : Lister tous les livres

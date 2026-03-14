@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+
+  # Ton service Flask
+  service-livres:
+    build: .
+    ports:
+      - "8001:8001"
+    environment:
+      DATABASE_URL: postgresql://admin:secret@db-livres:5432/livres_db
+    depends_on:
+      - db-livres
+    networks:
+      - livres-network
+
+  # La base de données PostgreSQL
+  db-livres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: livres_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - livres-network
+
+networks:
+  livres-network:
+    driver: bridge
+
+volumes:
+  pgdata:
