@@ -15,9 +15,9 @@ cd dit-library-api
 
 ### 2. Création d'un environnement viruel
 ```
-python3 -m venv .venv
-source .venv/bin/activate # pour linux
-.venv/Scripts/activate # pour windows
+python3 -m venv .venv 
+- source .venv/bin/activate # pour linux 
+- .venv/Scripts/activate # pour windows
 
 ### 3. Installer les dépendances
 ```
