@@ -12,14 +12,19 @@ Ce projet est une API développée avec FastAPI pour gérer la bibliothèque du 
 ```
 git clone <url-du-repo>
 cd dit-library-api
-```
 
-### 2. Installer les dépendances
+### 2. Création d'un environnement viruel
+```
+python3 -m venv .venv
+source .venv/bin/activate # pour linux
+.venv/Scripts/activate # pour windows
+
+### 3. Installer les dépendances
 ```
 pip install -r requirements.txt
 ```
 
-### 3. Lancer l'API
+### 4. Lancer l'API
 ```
 uvicorn main:app --reload
 ```
