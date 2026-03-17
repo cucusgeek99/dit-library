@@ -3,17 +3,6 @@ from db.database import Base
 from datetime import datetime
 
 #========================================
-# Class Classe pour gérer les classes de l"établissement
-#=========================================
-class Classe(Base):
-    __tablename__ = "classes"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(255), unique=True, index=True)
-    date_created = Column(Date, nullable=False, default=datetime.now().date)
-    date_updated = Column(Date, nullable=True)
-
-#========================================
 # Class Student pour gérer les étudiants dans la bibliothèque
 #=========================================
 class Student(Base):
@@ -23,7 +12,7 @@ class Student(Base):
     matriculation_number = Column(String(255), unique=True, index=True)
     name = Column(String(255), index=True)
     email = Column(String(255), unique=True, index=True)
-    classe_id = Column(Integer, ForeignKey("classes.id", ondelete="CASCADE"))
+    classe= Column(String(255), index=True, nullable=True)
     date_created = Column(Date, nullable=False, default=datetime.now().date)
     date_updated = Column(Date, nullable=True)
 
