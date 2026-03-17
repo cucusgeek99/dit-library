@@ -1,184 +1,197 @@
-from flask import Flask, request, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from flask_cors import CORS
-import os
-#####BLOCK2
-# Créer l'application Flask
-app = Flask(__name__)
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import create_engine, Column, Integer, String, Boolean
+from sqlalchemy.orm import declarative_base, sessionmaker, Session
+from pydantic import BaseModel
+from typing import Optional
+import os, time
 
-# Autoriser le frontend à appeler cette API
-CORS(app)
+# ─────────────────────────────────────────
+# Initialisation FastAPI
+# ─────────────────────────────────────────
+app = FastAPI(
+    title="Bibliothèque DIT — Service Livres",
+    description="API REST pour la gestion des livres",
+    version="1.0.0"
+)
 
-# Connexion à la base de données
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
+# CORS — autorise le frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ─────────────────────────────────────────
+# Connexion base de données
+# ─────────────────────────────────────────
+DATABASE_URL = os.environ.get(
     'DATABASE_URL',
     'postgresql://admin:secret@db-livres:5432/livres_db'
 )
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Initialiser SQLAlchemy
-db = SQLAlchemy(app)
-#######BLOCK3
-# La table "livres" dans PostgreSQL
-class Livre(db.Model):
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(bind=engine)
+Base = declarative_base()
+
+# ─────────────────────────────────────────
+# Modèle SQLAlchemy (table en BDD)
+# ─────────────────────────────────────────
+class Livre(Base):
     __tablename__ = 'livres'
 
-    id         = db.Column(db.Integer, primary_key=True)
-    titre      = db.Column(db.String(255), nullable=False)
-    auteur     = db.Column(db.String(255), nullable=False)
-    isbn       = db.Column(db.String(20), unique=True, nullable=True)
-    disponible = db.Column(db.Boolean, default=True, nullable=False)
+    id         = Column(Integer, primary_key=True, index=True)
+    titre      = Column(String(255), nullable=False)
+    auteur     = Column(String(255), nullable=False)
+    isbn       = Column(String(20), unique=True, nullable=True)
+    disponible = Column(Boolean, default=True)
 
-    def to_dict(self):
-        return {
-            'id':         self.id,
-            'titre':      self.titre,
-            'auteur':     self.auteur,
-            'isbn':       self.isbn,
-            'disponible': self.disponible
-        }
+# ─────────────────────────────────────────
+# Schémas Pydantic (validation des données)
+# ─────────────────────────────────────────
+class LivreCreate(BaseModel):
+    titre:  str
+    auteur: str
+    isbn:   Optional[str] = None
 
-# Créer la table automatiquement au démarrage
-with app.app_context():
-    db.create_all()
-# Créer la table avec retry (attend que PostgreSQL soit prêt)
-import time
+class LivreUpdate(BaseModel):
+    titre:      Optional[str]  = None
+    auteur:     Optional[str]  = None
+    isbn:       Optional[str]  = None
+    disponible: Optional[bool] = None
 
+class LivreResponse(BaseModel):
+    id:         int
+    titre:      str
+    auteur:     str
+    isbn:       Optional[str]
+    disponible: bool
+
+    class Config:
+        from_attributes = True
+
+# ─────────────────────────────────────────
+# Création des tables avec retry
+# ─────────────────────────────────────────
 def init_db():
     retries = 5
     while retries > 0:
         try:
-            with app.app_context():
-                db.create_all()
+            Base.metadata.create_all(bind=engine)
             print("✅ Base de données connectée avec succès !")
             break
         except Exception as e:
             retries -= 1
-            print(f"⏳ BDD pas encore prête... tentative restantes : {retries}")
+            print(f"⏳ BDD pas encore prête... tentatives restantes : {retries}")
             time.sleep(3)
 
-init_db()    
-#######BLOCK4
+init_db()
+
+# Helper — obtenir une session BDD
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+from fastapi import Depends
+
 # ─────────────────────────────────────────
 # ROUTE 1 : Lister tous les livres
 # GET /api/livres
 # ─────────────────────────────────────────
-@app.route('/api/livres', methods=['GET'])
-def get_livres():
-    livres = Livre.query.all()
-    return jsonify([l.to_dict() for l in livres]), 200
-
+@app.get("/api/livres", response_model=list[LivreResponse])
+def get_livres(db: Session = Depends(get_db)):
+    return db.query(Livre).all()
 
 # ─────────────────────────────────────────
-# ROUTE 2 : Rechercher par titre/auteur/ISBN
+# ROUTE 2 : Recherche par titre/auteur/ISBN
 # GET /api/livres/search?q=python
 # ─────────────────────────────────────────
-@app.route('/api/livres/search', methods=['GET'])
-def search_livres():
-    q = request.args.get('q', '').strip()
-
+@app.get("/api/livres/search", response_model=list[LivreResponse])
+def search_livres(q: str, db: Session = Depends(get_db)):
     if not q:
-        return jsonify({'error': 'Paramètre q requis'}), 400
-
-    resultats = Livre.query.filter(
-        db.or_(
-            Livre.titre.ilike(f'%{q}%'),
-            Livre.auteur.ilike(f'%{q}%'),
-            Livre.isbn.ilike(f'%{q}%')
-        )
+        raise HTTPException(status_code=400, detail="Paramètre q requis")
+    resultats = db.query(Livre).filter(
+        Livre.titre.ilike(f'%{q}%')  |
+        Livre.auteur.ilike(f'%{q}%') |
+        Livre.isbn.ilike(f'%{q}%')
     ).all()
+    return resultats
 
-    return jsonify([l.to_dict() for l in resultats]), 200
 # ─────────────────────────────────────────
 # ROUTE 3 : Afficher un seul livre
 # GET /api/livres/1
 # ─────────────────────────────────────────
-@app.route('/api/livres/<int:id>', methods=['GET'])
-def get_livre(id):
-    livre = Livre.query.get(id)
-
-    if livre is None:
-        return jsonify({'error': 'Livre non trouvé'}), 404
-
-    return jsonify(livre.to_dict()), 200
-
+@app.get("/api/livres/{id}", response_model=LivreResponse)
+def get_livre(id: int, db: Session = Depends(get_db)):
+    livre = db.query(Livre).filter(Livre.id == id).first()
+    if not livre:
+        raise HTTPException(status_code=404, detail="Livre non trouvé")
+    return livre
 
 # ─────────────────────────────────────────
-# ROUTE 4 : Ajouter un nouveau livre
+# ROUTE 4 : Créer un livre
 # POST /api/livres
-# Body : {"titre": "...", "auteur": "...", "isbn": "..."}
 # ─────────────────────────────────────────
-@app.route('/api/livres', methods=['POST'])
-def create_livre():
-    data = request.get_json()
-
-    # Vérifier que les champs obligatoires sont présents
-    if not data or not data.get('titre') or not data.get('auteur'):
-        return jsonify({'error': 'titre et auteur sont obligatoires'}), 400
-
-    # Vérifier que l'ISBN n'existe pas déjà
-    if data.get('isbn'):
-        existant = Livre.query.filter_by(isbn=data['isbn']).first()
+@app.post("/api/livres", status_code=201)
+def create_livre(data: LivreCreate, db: Session = Depends(get_db)):
+    # Vérifier ISBN unique
+    if data.isbn:
+        existant = db.query(Livre).filter(Livre.isbn == data.isbn).first()
         if existant:
-            return jsonify({'error': 'ISBN déjà utilisé'}), 409
+            raise HTTPException(status_code=409, detail="ISBN déjà utilisé")
 
-    nouveau = Livre(
-        titre  = data['titre'],
-        auteur = data['auteur'],
-        isbn   = data.get('isbn')
-    )
+    nouveau = Livre(titre=data.titre, auteur=data.auteur, isbn=data.isbn)
+    db.add(nouveau)
+    db.commit()
+    db.refresh(nouveau)
+    return {"message": "Livre créé avec succès", "id": nouveau.id}
 
-    db.session.add(nouveau)
-    db.session.commit()
-
-    return jsonify({'message': 'Livre créé avec succès', 'id': nouveau.id}), 201
 # ─────────────────────────────────────────
 # ROUTE 5 : Modifier un livre
 # PUT /api/livres/1
-# Body : {"titre": "...", "disponible": false}
 # ─────────────────────────────────────────
-@app.route('/api/livres/<int:id>', methods=['PUT'])
-def update_livre(id):
-    livre = Livre.query.get(id)
+@app.put("/api/livres/{id}", response_model=LivreResponse)
+def update_livre(id: int, data: LivreUpdate, db: Session = Depends(get_db)):
+    livre = db.query(Livre).filter(Livre.id == id).first()
+    if not livre:
+        raise HTTPException(status_code=404, detail="Livre non trouvé")
 
-    if livre is None:
-        return jsonify({'error': 'Livre non trouvé'}), 404
+    if data.titre      is not None: livre.titre      = data.titre
+    if data.auteur     is not None: livre.auteur     = data.auteur
+    if data.isbn       is not None: livre.isbn       = data.isbn
+    if data.disponible is not None: livre.disponible = data.disponible
 
-    data = request.get_json()
-
-    if not data:
-        return jsonify({'error': 'Données JSON requises'}), 400
-
-    # Mettre à jour seulement les champs envoyés
-    if 'titre'      in data: livre.titre      = data['titre']
-    if 'auteur'     in data: livre.auteur     = data['auteur']
-    if 'isbn'       in data: livre.isbn       = data['isbn']
-    if 'disponible' in data: livre.disponible = data['disponible']
-
-    db.session.commit()
-
-    return jsonify({'message': 'Livre mis à jour', 'livre': livre.to_dict()}), 200
-
+    db.commit()
+    db.refresh(livre)
+    return livre
 
 # ─────────────────────────────────────────
 # ROUTE 6 : Supprimer un livre
 # DELETE /api/livres/1
 # ─────────────────────────────────────────
-@app.route('/api/livres/<int:id>', methods=['DELETE'])
-def delete_livre(id):
-    livre = Livre.query.get(id)
+@app.delete("/api/livres/{id}")
+def delete_livre(id: int, db: Session = Depends(get_db)):
+    livre = db.query(Livre).filter(Livre.id == id).first()
+    if not livre:
+        raise HTTPException(status_code=404, detail="Livre non trouvé")
 
-    if livre is None:
-        return jsonify({'error': 'Livre non trouvé'}), 404
+    db.delete(livre)
+    db.commit()
+    return {"message": "Livre supprimé avec succès"}
+```
 
-    db.session.delete(livre)
-    db.session.commit()
+---
 
-    return jsonify({'message': 'Livre supprimé avec succès'}), 200
+## Mettre à jour `requirements.txt`
 
-
-# ─────────────────────────────────────────
-# Lancement de l'application
-# ─────────────────────────────────────────
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8001, debug=True)
+Remplace tout par :
+```
+fastapi==0.110.0
+uvicorn==0.29.0
+sqlalchemy==2.0.29
+psycopg2-binary==2.9.9
+pydantic==2.6.4

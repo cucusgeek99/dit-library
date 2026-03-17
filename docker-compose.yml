@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
 
-  # Ton service Flask
+  # Service FastAPI — Livres
   service-livres:
     build: .
     ports:
@@ -14,7 +14,7 @@ services:
     networks:
       - livres-network
 
-  # La base de données PostgreSQL
+  # Base de données PostgreSQL
   db-livres:
     image: postgres:15
     environment:
@@ -23,6 +23,16 @@ services:
       POSTGRES_DB: livres_db
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - livres-network
+
+  # Frontend nginx
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - service-livres
     networks:
       - livres-network
 

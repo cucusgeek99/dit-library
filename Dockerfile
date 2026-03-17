@@ -32,4 +32,4 @@ EXPOSE 8001
 # ─────────────────────────────────────────
 # ETAPE 6 : Démarrer l'application
 # ─────────────────────────────────────────
-CMD ["python", "app.py"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8001"]

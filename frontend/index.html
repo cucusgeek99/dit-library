@@ -177,8 +177,8 @@
         // Erreur
         msg.style.display = 'block';
         msg.style.background = '#fee2e2';
-        msg.style.color = '#991b1b';
-        msg.textContent = `❌ Erreur : ${data.error}`;
+        msg.style.color = '#991919';
+        msg.textContent = `Erreur : ${data.detail || data.error}`;
       }
     }
     async function chargerLivres() {
