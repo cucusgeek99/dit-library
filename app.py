@@ -182,14 +182,11 @@ def delete_livre(id: int, db: Session = Depends(get_db)):
     db.delete(livre)
     db.commit()
     return {"message": "Livre supprimé avec succès"}
-```
 
----
 
 ## Mettre à jour `requirements.txt`
 
 Remplace tout par :
-```
 fastapi==0.110.0
 uvicorn==0.29.0
 sqlalchemy==2.0.29
