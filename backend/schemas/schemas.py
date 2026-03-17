@@ -1,25 +1,27 @@
 from pydantic import BaseModel, Field
 from datetime import date
+from enum import Enum
 
 #========================================
-# Schema Classe pour gérer les classes de l"établissement
+# Enum StudentClass pour gérer les classes de l"établissement
 #=========================================
-class ClasseSchema(BaseModel):
-    name: str
-    date_created: date = Field(default_factory=date.today)
-    date_updated: date | None = None
-
-    class Config:
-        from_attributes = True
+class StudentClass(str, Enum):
+    L1_BIG_DATA = "Licence 1 BIG DATA"
+    L2_BIG_DATA = "Licence 2 BIG DATA"
+    L3_BIG_DATA = "Licence 3 BIG DATA"
+    M1_IA = "Master 1 IA"
+    M2_IA = "Master 2 IA"
+    M1_FD = "Master 1 FD"
+    M2_FD = "Master 2 FD"
 
 #========================================
 # Schema Student pour gérer les étudiants dans la bibliothèque
 #=========================================
 class StudentSchema(BaseModel):
-    matriculation_number: str
-    name: str
-    email: str
-    classe_id: int
+    matriculation_number: str = Field(min_length = 1)
+    name: str = Field(min_length = 2, max_length = 255)
+    email: str = Field(pattern=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+    classe: StudentClass
     date_created: date = Field(default_factory=date.today)
     date_updated: date | None = None
 
@@ -30,11 +32,11 @@ class StudentSchema(BaseModel):
 # Schema Book pour gérer les livres dans la bibliothèque
 #=========================================
 class BookSchema(BaseModel):
-    title: str
+    title: str = Field(min_length = 1, max_length = 255)
     author: str | None = None
-    published_year: int
-    isbn: str
-    total_copies: int
+    published_year: int = Field(gt=0)
+    isbn: str = Field(min_length = 5, max_length = 5)
+    total_copies: int = Field(gt=0)
     is_available: bool
     cover_path: str | None = None
     date_created: date = Field(default_factory=date.today)
