@@ -40,3 +40,33 @@ Ce projet fonctionne sur tous les systèmes d'exploitation (Windows, macOS, Linu
 
 ## Documentation
 La documentation interactive est disponible sur [http://localhost:8000/docs](http://localhost:8000/docs).
+
+
+## UTILISATION DU PACKAGE ALEMBIC
+Le package alembic nous permet de gérer proprement notre base de données
+
+# INSTALLATION
+pip install alembic
+
+# INITIALISATION
+alembic init alembic
+
+# CONFIGURATION
+- Dans le fichier alembic.ini
+Ouvrez le fichier alembic.ini qui se trouve à la racine du projet, cherchez la ligne : 
+sqlalchemy.url = mettez votre chaine de connexion ici
+
+- Dans le fichier : env.py
+Rendez vous dans : alembic/env.py et modifier rajouter ceci 
+* from db.database import Base 
+pour importe la Base
+
+* from models.models import *
+pour importer tous nos models afin que alembic soit au courant des models
+
+* target_metadata = Base.metadata
+recherchez la ligne target_metadata = None, enlevez le None et mettez les metadata de la Base
+
+# LES MIGRATIONS
+- alembic revision --autogenerate -m "Message ici"
+- alembic upgrade head
