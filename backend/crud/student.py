@@ -36,7 +36,7 @@ def get_student(db: Session, student_id: int) -> Student:
 
 def get_students(db: Session) -> list[Student]:
     try:
-        list_students = db.query(Student).all()
+        list_students = db.query(Student).order_by(Student.id).all()
         return list_students
     except SQLAlchemyError as e:
         raise e
