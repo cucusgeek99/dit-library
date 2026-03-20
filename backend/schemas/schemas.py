@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel, Field
 from datetime import date
 from enum import Enum
@@ -43,6 +45,26 @@ class BookSchema(BaseModel):
     date_updated: date | None = None
     class Config:
         from_attributes = True
+
+class BookCreate(BaseModel):
+    title:  str
+    author: str
+    isbn:   Optional[str] = None
+    published_year: int = Field(gt=0)
+    total_copies: int = Field(gt=0)
+    is_available: bool = Field(default=True)
+    cover_path: Optional[str] = None
+    date_created: date = Field(default_factory=date.today)
+
+class BookUpdate(BaseModel):
+    title:  str
+    author: str
+    isbn:   Optional[str] = None
+    published_year: int = Field(gt=0)
+    total_copies: int = Field(gt=0)
+    is_available: bool = Field(default=True)
+    cover_path: Optional[str] = None
+    date_updated: date = Field(default_factory=date.today)
 
 #========================================
 # Schema Borrow pour gérer les emprunts de livres par les étudiants
