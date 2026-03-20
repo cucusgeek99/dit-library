@@ -63,11 +63,6 @@ def update_books(db: Session, id: int, data: BookUpdate):
         if not book:
             return None
 
-        # if data.title      is not None: book.title      = data.title
-        # if data.author     is not None: book.author     = data.author
-        # if data.isbn       is not None: book.isbn       = data.isbn
-        # if data.is_available is not None: book.is_available = data.is_available
-
         if not data:
             return None
     

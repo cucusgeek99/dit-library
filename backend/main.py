@@ -3,9 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 import crud.student as crud_student
 import crud.book as crud_book
+import crud.borrow as ops_borrow
 from db.database import session_local
 from models.models import Book, Student
-from schemas.schemas import BookCreate, BookSchema, BookUpdate, StudentSchema
+from schemas.schemas import BookCreate, BookSchema, BookUpdate, BorrowCreate, BorrowSchema, StudentSchema
+from sqlalchemy.exc import NoResultFound
 
 # Dépendance pour obtenir une session de base de données
 def get_db():
@@ -144,3 +146,95 @@ def delete_book_by_id(book_id: int, db: Session = Depends(get_db)):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail="Erreur lors de la suppression du livre")
+
+
+# ===================================
+# Routes pour les emprunts
+# ===================================
+@app.post("/borrow/create", tags=["Emprunts"])
+def create_borrow(borrow: BorrowCreate, db: Session = Depends(get_db)):
+    try:
+        result = ops_borrow.create_borrow(db, borrow)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la création de l'emprunt : {str(e)}")
+    
+@app.get("/borrows", tags=["Emprunts"])
+def get_borrows(db: Session = Depends(get_db)):
+    try:
+        borrows = ops_borrow.get_borrows(db)
+        if not borrows:
+            raise HTTPException(status_code=404, detail="Aucun emprunt trouvé")
+        return borrows
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Erreur lors de la récupération des emprunts")
+
+@app.get("/borrow/{borrow_id}", tags=["Emprunts"])
+def get_borrow_by_id(borrow_id: int, db: Session = Depends(get_db)):
+    try:
+        borrow_data = ops_borrow.get_borrow(db, borrow_id)
+        if not borrow_data:
+            raise HTTPException(status_code=404, detail="Emprunt non trouvé")
+        return borrow_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Erreur lors de la récupération de l'emprunt")
+    
+@app.put("/borrow/{borrow_id}/update", tags=["Emprunts"])
+def update_borrow_by_id(borrow_id: int, borrow_data: BorrowSchema, db: Session = Depends(get_db)):
+    try:
+        updated_borrow = ops_borrow.update_borrow(db, borrow_id, borrow_data)
+        if not updated_borrow:
+            raise HTTPException(status_code=404, detail="Emprunt non trouvé")
+        return updated_borrow
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour de l'emprunt : {str(e)}")
+
+@app.delete("/borrow/{borrow_id}/delete", tags=["Emprunts"])
+def delete_borrow_by_id(borrow_id: int, db: Session = Depends(get_db)):
+    try:
+        result = ops_borrow.delete_borrow(db, borrow_id)
+        if not result:
+            raise HTTPException(status_code=404, detail="Emprunt non trouvé")
+        return {"message": "Emprunt supprimé avec succès"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Erreur lors de la suppression de l'emprunt")
+    
+@app.get("/borrows/returned", tags=["Emprunts"])
+def get_returned_borrows(db: Session = Depends(get_db)):
+    try:
+        borrows = ops_borrow.get_returned_borrows(db)
+        if not borrows or len(borrows) == 0:
+            return {"message": "Aucun emprunt retourné trouvé"}            
+        return borrows
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des emprunts retournés : {str(e)}")
+
+@app.get("/borrows/student/{student_id}", tags=["Emprunts"])
+def get_borrow_by_student_id(student_id: int, db: Session = Depends(get_db)):
+    try:
+        borrows = ops_borrow.get_borrow_by_student_id(db, student_id)
+        if not borrows:
+            raise HTTPException(status_code=404, detail="Aucun emprunt trouvé pour cet étudiant")
+        return borrows
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Erreur lors de la récupération des emprunts pour l'étudiant")
+    
+@app.get("/borrows/book/{book_id}", tags=["Emprunts"])
+def get_borrow_by_book_id(book_id: int, db: Session = Depends(get_db)):
+    try:
+        borrows = ops_borrow.get_borrow_by_book_id(db, book_id)
+        if not borrows:
+            raise HTTPException(status_code=404, detail="Aucun emprunt trouvé pour ce livre")
+        return borrows
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Erreur lors de la récupération des emprunts pour le livre")
+    
+@app.post("/borrow/{book_id}/{std_id}/return", tags=["Emprunts"])
+def return_borrow(book_id: int, std_id: int, db: Session = Depends(get_db)):
+    try:
+        borrow= ops_borrow.return_borrow(db, book_id, std_id)
+        if not borrow:
+            raise HTTPException(status_code=404, detail="Aucun emprunt trouvé pour ce livre")
+        return borrow
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de l'enregistrement du retour du prêt du livre {str(e)}")
