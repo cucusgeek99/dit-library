@@ -74,9 +74,18 @@ class BorrowSchema(BaseModel):
     book_id: int
     borrow_date: date
     return_date: date | None = None
-    is_returned: bool
+    is_returned: bool = Field(default=False)
     date_created: date = Field(default_factory=date.today)
     date_updated: date | None = None
+
+    class Config:
+        from_attributes = True
+
+class BorrowCreate(BaseModel):
+    student_id: int
+    book_id: int
+    borrow_date: date
+    date_created: date = Field(default_factory=date.today)
 
     class Config:
         from_attributes = True

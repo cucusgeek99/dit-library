@@ -16,6 +16,9 @@ class Student(Base):
     date_created = Column(Date, nullable=False, default=datetime.now().date)
     date_updated = Column(Date, nullable=True)
 
+    def __repr__(self):
+        return f"{self.name} en ({self.classe})"
+
 
 #========================================
 # Class Book pour gérer les livres dans la bibliothèque
@@ -33,6 +36,9 @@ class Book(Base):
     cover_path = Column(String(255), nullable=True) 
     date_created = Column(Date, nullable=False, default=datetime.now().date)
     date_updated = Column(Date, nullable=True)
+
+    def __repr__(self):
+        return f"{self.title} by {self.author}"
 
 
 #========================================
