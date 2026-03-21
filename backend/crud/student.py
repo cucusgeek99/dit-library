@@ -1,9 +1,9 @@
 from sqlalchemy.orm import Session
 from models.models import Student
-from schemas.schemas import StudentSchema
+from schemas.schemas import StudentCreate, StudentUpdate, StudentSchema
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError, NoResultFound
 
-def create_student(db: Session, student: StudentSchema) -> Student:
+def create_student(db: Session, student: StudentCreate) -> Student:
     new_student = Student(
         matriculation_number=student.matriculation_number,
         name=student.name,
@@ -41,7 +41,7 @@ def get_students(db: Session) -> list[Student]:
     except SQLAlchemyError as e:
         raise e
     
-def update_student(db: Session, student_id: int, student_data: StudentSchema) -> Student:
+def update_student(db: Session, student_id: int, student_data: StudentUpdate) -> Student:
     try:
         student = db.query(Student).filter(Student.id == student_id).first()
         if not student:

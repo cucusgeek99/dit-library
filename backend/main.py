@@ -6,8 +6,8 @@ import crud.book as crud_book
 import crud.borrow as ops_borrow
 from db.database import session_local
 from models.models import Book, Student
-from schemas.schemas import BookCreate, BookSchema, BookUpdate, BorrowCreate, BorrowSchema, StudentSchema
-from sqlalchemy.exc import NoResultFound
+from schemas.schemas import BookCreate, BookSchema, BookUpdate, BorrowCreate, BorrowSchema, StudentSchema, StudentUpdate, StudentCreate
+import crud.dashoard as stats
 
 # Dépendance pour obtenir une session de base de données
 def get_db():
@@ -34,13 +34,47 @@ app.add_middleware(
 
 @app.get("/")
 def index():
-    return {"message": "Bienvenue à la DIT Library API!"}
+    return {"message": "Bienvenue à la DIT Library API! Rendez-vous à la page", "docs": "http://127.0.0.1:8000/docs/"}
+
+
+#=================================
+# Routes pour les statistiques
+#=================================
+@app.get("/statistiques", tags=["Dashboard"])
+def get_dashboard_summary(db: Session = Depends(get_db)):
+    """
+    Récupère toutes les statistiques globales pour le tableau de bord.
+    """
+    # Récupération des compteurs simples
+    general = stats.get_general_stats(db)
+    
+    # Formatage des stats par classe
+    by_class = [
+        {"classe": row[0], "total": row[1]} 
+        for row in stats.get_borrows_by_class(db)
+    ]
+    
+    # Formatage des livres les plus empruntés
+    top_books = [
+        {"title": row[0], "borrow_count": row[1]} 
+        for row in stats.get_most_borrowed_books(db)
+    ]
+
+    # Récupération des emprunts non rendus
+    overdue_borrow = stats.get_overdue_borrows(db)
+    
+    return {
+        **general,
+        "borrows_by_class": by_class,
+        "top_books": top_books,
+        "overdue_borrow": overdue_borrow
+    }
 
 
 # ===================================
 # Routes pour les étudiants
 # ===================================
-@app.post("/student/create", response_model=StudentSchema, tags=["Étudiants"])
+@app.post("/student/create", response_model=StudentCreate, tags=["Étudiants"])
 def create_student(student: StudentSchema, db: Session = Depends(get_db)):
     try:
         student_data = crud_student.create_student(db, student)
@@ -48,7 +82,7 @@ def create_student(student: StudentSchema, db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail="Erreur lors de la création de l'étudiant")
 
-@app.get("/students", response_model=list[StudentSchema], tags=["Étudiants"])
+@app.get("/students", tags=["Étudiants"])
 def get_all_students(db: Session = Depends(get_db)):
     try:
         students = crud_student.get_students(db)
@@ -56,7 +90,7 @@ def get_all_students(db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail="Erreur lors de la récupération des étudiants")
     
-@app.get("/student/{student_id}", response_model=StudentSchema, tags=["Étudiants"])
+@app.get("/student/{student_id}", tags=["Étudiants"])
 def get_student_by_id(student_id: int, db: Session = Depends(get_db)):
     student = crud_student.get_student(db, student_id)
     try:
@@ -66,7 +100,7 @@ def get_student_by_id(student_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail="Erreur lors de la récupération de l'étudiant")
     
-@app.put("/student/{student_id}/update", response_model=StudentSchema, tags=["Étudiants"])
+@app.put("/student/{student_id}/update", response_model=StudentUpdate, tags=["Étudiants"])
 def update_student_by_id(student_id: int, student: StudentSchema, db: Session = Depends(get_db)):
     try:
         updated_student = crud_student.update_student(db, student_id, student)
