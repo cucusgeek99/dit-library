@@ -1,12 +1,12 @@
 {
-    "compilerOptions": {
-      "baseUrl": ".",
-      "paths": {
-        "@/*": ["./src/*"]
-      },
-      "allowJs": true,
-      "checkJs": false,
-      "ignoreDeprecations": "6.0"
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
     },
-    "include": ["src/**/*"]
-  }
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "ignoreDeprecations": "6.0"
+  },
+  "include": ["src"]
+}

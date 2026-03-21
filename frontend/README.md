@@ -1,16 +1,71 @@
-# React + Vite
+# 📚 Bibliothèque Numérique Microservices - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 🧾 Introduction
 
-Currently, two official plugins are available:
+Ce projet est le **frontend d’un système de gestion de la bibliothèque numérique** développé dans le cadre de **l'examen pratique DevOps**.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+L’application a pour objectif de fournir une interface moderne permettant de gérer efficacement :
 
-## React Compiler
+- les livres 📖  
+- les utilisateurs 👥  
+- les emprunts 🔄  
+<!-- - les profils 👤   -->
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## 🚀 Lancer le projet en local (après clonage)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 1. Cloner le projet
+
+```bash
+git clone <URL_DU_REPO>
+cd frontend-library
+```
+
+### 2. Installer les dépendances
+
+```bash
+npm install
+```
+
+### 3. Lancer le serveur de développement
+
+```bash
+npm run dev
+```
+
+### 4. Accéder à l’application
+Ouvrez votre navigateur et rendez-vous à l’adresse suivante :
+
+```
+http://localhost:5173
+```
+---
+
+## 🛠️ Technologies utilisées
+- **React** : Bibliothèque JavaScript pour construire des interfaces utilisateur.
+- **Vite** : Outil de build rapide pour les projets frontend.
+- **Tailwind CSS** : Framework CSS utilitaire pour un design rapide et responsive.
+- **ShadCN UI** : Composants UI modernes et personnalisables pour React.
+- **React Router DOM**
+- **Lucide React** pour les icônes
+
+---
+## 📁 Structure du projet
+```
+frontend-library/
+├── public/             # Fichiers statiques
+├── src/                # Code source de l'application
+│   ├── components/     # Composants réutilisables
+|   ├── data/           # Fichiers de données (ex: livres, utilisateurs)
+│   ├── pages/          # Pages de l'application
+|   ├── routes/         # Configuration des routes
+│   ├── App.jsx         # Composant principal
+|   ├── index.css       # Styles globaux
+│   └── main.jsx        # Point d'entrée de l'application
+├── package.json        # Dépendances et scripts
+├── vite.config.js      # Configuration de Vite
+└── README.md           # Documentation du projet
+```
+---
+
