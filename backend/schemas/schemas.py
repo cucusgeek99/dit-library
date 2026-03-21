@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field
 from datetime import date
@@ -19,16 +19,35 @@ class StudentClass(str, Enum):
 #========================================
 # Schema Student pour gérer les étudiants dans la bibliothèque
 #=========================================
-class StudentSchema(BaseModel):
-    matriculation_number: str = Field(min_length = 1)
-    name: str = Field(min_length = 2, max_length = 255)
+# Schéma de base (champs communs)
+class StudentBase(BaseModel):
+    matriculation_number: str = Field(min_length=1)
+    name: str = Field(min_length=2, max_length=255)
     email: str = Field(pattern=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
     classe: StudentClass
+
+class StudentSchema(StudentBase):    
     date_created: date = Field(default_factory=date.today)
     date_updated: date | None = None
 
     class Config:
         from_attributes = True
+
+# Schéma pour la CRÉATION (L'utilisateur ne voit/remplit pas l'ID)
+class StudentCreate(StudentBase):
+    date_created: date = Field(default_factory=date.today)
+
+class StudentUpdate(StudentBase):
+    date_updated: date = Field(default_factory=date.today)
+
+# Schéma pour la LECTURE (L'API retourne l'ID généré par la DB)
+# class StudentRead(StudentBase):
+#     id: int # On l'ajoute ici uniquement pour le retour
+#     date_created: date
+#     date_updated: date | None = None
+
+#     class Config:
+#         from_attributes = True
 
 #========================================
 # Schema Book pour gérer les livres dans la bibliothèque
@@ -86,6 +105,20 @@ class BorrowCreate(BaseModel):
     book_id: int
     borrow_date: date
     date_created: date = Field(default_factory=date.today)
+
+    class Config:
+        from_attributes = True
+
+#==========================================
+# Schema pour les statistiques
+#==========================================
+class DashboardStats(BaseModel):
+    total_students: int
+    total_books: int
+    active_borrows: int
+    available_books: int
+    borrows_by_class: List[Dict[str, int]]
+    top_books: List[Dict[str, int]]
 
     class Config:
         from_attributes = True
