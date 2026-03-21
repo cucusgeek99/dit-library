@@ -20,6 +20,9 @@ L’application a pour objectif de fournir une interface moderne permettant de g
 - **Tailwind CSS** : Framework CSS utilitaire pour un design rapide et responsive.
 - **ShadCN UI** : Composants UI modernes et personnalisables pour React.
 - **Lucide React** pour les icônes
+- **React Router** pour la gestion des routes
+
+---
 
 ## 🚀 Lancer le projet en local
 
