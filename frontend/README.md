@@ -13,6 +13,14 @@ L’application a pour objectif de fournir une interface moderne permettant de g
 
 ---
 
+## 🛠️ Technologies utilisées
+
+- **React** : Bibliothèque JavaScript pour construire des interfaces utilisateur.
+- **Vite** : Outil de build rapide pour les projets frontend.
+- **Tailwind CSS** : Framework CSS utilitaire pour un design rapide et responsive.
+- **ShadCN UI** : Composants UI modernes et personnalisables pour React.
+- **Lucide React** pour les icônes
+
 ## 🚀 Lancer le projet en local
 
 ### 1. Cloner le projet
@@ -72,16 +80,6 @@ Ouvrez votre navigateur et rendez-vous à l’adresse suivante :
 ```
 http://localhost:5173
 ```
-
----
-
-## 🛠️ Technologies utilisées
-
-- **React** : Bibliothèque JavaScript pour construire des interfaces utilisateur.
-- **Vite** : Outil de build rapide pour les projets frontend.
-- **Tailwind CSS** : Framework CSS utilitaire pour un design rapide et responsive.
-- **ShadCN UI** : Composants UI modernes et personnalisables pour React.
-- **Lucide React** pour les icônes
 
 ---
 
