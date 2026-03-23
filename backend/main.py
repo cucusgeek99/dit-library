@@ -1,12 +1,17 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 import crud.student as crud_student
 import crud.book as crud_book
 import crud.borrow as ops_borrow
+import crud.user as ops_user
+import crud.auth as auth
 from db.database import session_local
-from models.models import Book, Student
-from schemas.schemas import BookCreate, BookSchema, BookUpdate, BorrowCreate, BorrowSchema, StudentSchema, StudentUpdate, StudentCreate
+from models.models import Book, Student, UserDB
+from schemas.schemas import (
+    BookCreate, BookSchema, BookUpdate, BorrowCreate, BorrowSchema, StudentSchema, StudentUpdate, StudentCreate,
+    UserOut, UserCreate, UserLogin    
+)
 import crud.dashoard as stats
 
 # Dépendance pour obtenir une session de base de données
@@ -68,6 +73,60 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
         "borrows_by_class": by_class,
         "top_books": top_books,
         "overdue_borrow": overdue_borrow
+    }
+
+#===================================
+# Routes pour le login
+#===================================
+@app.post("/user/create", response_model=UserOut, tags=["Authentification"])
+def create_user(user: UserCreate, db: Session = Depends(get_db)):
+    try:
+        user_data = ops_user.create_user(db=db, user=user)        
+        return user_data
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Erreur lors de la création de l'utilisateur {e}")
+
+@app.get("/users/", response_model=list[UserOut], tags=["Utilisateurs"])
+def get_users(db: Session = Depends(get_db)):
+    try:
+        users = ops_user.get_users(db)
+        return users
+    except Exception as e:
+        HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erreur lors de la recuperation des utilisateurs")
+
+@app.get("/user/{user_id}", response_model=UserOut, tags=["Utilisateurs"])
+def get_user(user_id: int, db: Session = Depends(get_db)):
+    try:
+        user = ops_user.get_user_by_id(db, user_id)
+        if not user:
+            return HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        return user
+    except Exception as e:
+        HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erreur lors de la recuperation des utilisateurs")
+    
+@app.post("/user/login", tags=["Authentification"])
+def login(user_credentials: UserLogin, db: Session = Depends(get_db)):    
+    user = db.query(UserDB).filter(UserDB.email == user_credentials.email).first()
+        
+    if not user or not ops_user.verify_password(user_credentials.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Identifiants incorrects"
+        )
+
+    # 1. Créer le token
+    access_token = auth.create_access_token(data={"user_id": user.id, "role": user.role})
+
+    # 2. Retourner le token ET les infos user (selon votre besoin)
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "full_name": user.full_name,
+            "email": user.email,
+            "role": user.role
+        }
     }
 
 
