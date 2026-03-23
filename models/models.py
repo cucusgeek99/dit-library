@@ -2,9 +2,24 @@ from sqlalchemy import Boolean, Column, Integer, String, DateTime, Date, Foreign
 from db.database import Base
 from datetime import datetime
 
+#=======================================
+# Class User pour gérer les utilisateurs
+#=======================================
+class UserDB(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    full_name = Column(String(255))
+    email = Column(String(100), unique=True, index=True)
+    hashed_password = Column(String(255)) # On stocke le hash, pas le mot de passe clair
+    role = Column(String(30), default="Lecteur")
+    date_created = Column(Date, nullable=False, default=datetime.now().date)
+    date_updated = Column(Date, nullable=True)
+    
+
 #========================================
 # Class Student pour gérer les étudiants dans la bibliothèque
-#=========================================
+#========================================
 class Student(Base):
     __tablename__ = "students"
 
@@ -22,7 +37,7 @@ class Student(Base):
 
 #========================================
 # Class Book pour gérer les livres dans la bibliothèque
-#=========================================
+#========================================
 class Book(Base):
     __tablename__ = "books"
 
@@ -43,7 +58,7 @@ class Book(Base):
 
 #========================================
 # Class Borrow pour gérer les emprunts de livres par les étudiants
-#=========================================
+#========================================
 class Borrow(Base):
     __tablename__ = "borrows"
 
@@ -55,5 +70,3 @@ class Borrow(Base):
     is_returned = Column(Boolean, index=True, default=False)
     date_created = Column(Date, nullable=False, default=datetime.now().date)
     date_updated = Column(Date, nullable=True)
-
-    

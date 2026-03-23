@@ -1,11 +1,41 @@
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 from datetime import date
 from enum import Enum
 
+
 #========================================
-# Enum StudentClass pour gérer les classes de l"établissement
+# Type de compte
+#========================================
+class TypeCompte(str, Enum):
+    LECTEUR = "Lecteur"
+    BIBLIOTHECAIRE = "Bibliothécaire"
+    GESTION_USER = "Gestion Utilisateurs"
+    ADMIN = "Administrateur"
+
+class UserCreate(BaseModel):
+    full_name: str
+    email: EmailStr
+    password: str
+    role: str = "Lecteur"
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserOut(BaseModel):
+    id: int
+    full_name: str
+    email: EmailStr
+    role: str
+
+    class Config:
+        from_attributes = True
+
+
+#========================================
+# Schema Student pour gérer les étudiants dans la bibliothèque
 #=========================================
 class StudentClass(str, Enum):
     L1_BIG_DATA = "Licence 1 BIG DATA"
@@ -16,10 +46,6 @@ class StudentClass(str, Enum):
     M1_FD = "Master 1 FD"
     M2_FD = "Master 2 FD"
 
-#========================================
-# Schema Student pour gérer les étudiants dans la bibliothèque
-#=========================================
-# Schéma de base (champs communs)
 class StudentBase(BaseModel):
     matriculation_number: str = Field(min_length=1)
     name: str = Field(min_length=2, max_length=255)
