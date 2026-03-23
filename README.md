@@ -70,3 +70,7 @@ recherchez la ligne target_metadata = None, enlevez le None et mettez les metada
 # LES MIGRATIONS
 - alembic revision --autogenerate -m "Message ici"
 - alembic upgrade head
+
+# AJOUTER LE MODEL USERS
+- alembic revision --autogenerate -m "creation du model user"
+- alembic upgrade head
