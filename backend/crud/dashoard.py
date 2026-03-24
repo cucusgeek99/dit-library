@@ -1,24 +1,19 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from models.models import Student, Book, Borrow # Assure-tu d'importer tes modèles
+from models.models import UserDB, Book, Borrow # Assure-tu d'importer tes modèles
 from datetime import date
 
 def get_general_stats(db: Session):
     """ Retourne les compteurs principaux pour le dashboard """
     return {
-        "total_students": db.query(Student).count(),
+        "total_users": db.query(UserDB).count(),
+        "total_student": db.query(UserDB).filter(UserDB.user_type == "Etudiant").count(),
+        "total_prof": db.query(UserDB).filter(UserDB.user_type == "Professeur").count(),
+        "total_admin": db.query(UserDB).filter(UserDB.user_type == "Personnel administratif").count(),
         "total_books": db.query(Book).count(),
         "active_borrows": db.query(Borrow).filter(Borrow.is_returned == False).count(),
         "available_books": db.query(Book).filter(Book.is_available == True).count()
     }
-
-def get_borrows_by_class(db: Session):
-    """ Statistiques des emprunts par classe d'étudiants """
-    return db.query(
-        Student.classe, 
-        func.count(Borrow.id).label("total")
-    ).join(Borrow, Student.id == Borrow.student_id)\
-     .group_by(Student.classe).all()
 
 def get_most_borrowed_books(db: Session, limit: int = 5):
     """ Liste les livres les plus sollicités """
