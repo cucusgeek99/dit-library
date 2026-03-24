@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "ignoreDeprecations": "6.0"
+  },
+  "include": ["src"]
+}
