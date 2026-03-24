@@ -6,7 +6,7 @@ from schemas.schemas import BorrowSchema, BorrowCreate
 
 def create_borrow(db: Session, borrow: BorrowCreate) -> Borrow:
     new_borrow = Borrow(
-        student_id=borrow.student_id,
+        user_id=borrow.user_id,
         book_id=borrow.book_id,
         borrow_date=borrow.borrow_date,
         date_created=borrow.date_created,
@@ -33,7 +33,7 @@ def update_borrow(db: Session, borrow_id: int, borrow_data: BorrowSchema) -> Bor
     if not borrow:
         return None
     
-    borrow.student_id = borrow_data.student_id
+    borrow.user_id = borrow_data.user_id
     borrow.book_id = borrow_data.book_id
     borrow.borrow_date = borrow_data.borrow_date
     borrow.return_date = borrow_data.return_date

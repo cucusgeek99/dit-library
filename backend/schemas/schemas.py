@@ -9,16 +9,15 @@ from enum import Enum
 # Type de compte
 #========================================
 class TypeCompte(str, Enum):
-    LECTEUR = "Lecteur"
-    BIBLIOTHECAIRE = "Bibliothécaire"
-    GESTION_USER = "Gestion Utilisateurs"
-    ADMIN = "Administrateur"
+    ETUDIANT = "Etudiant"
+    PROFESSEUR = "Professeur"
+    PERSONNEL_ADMINISTRATIF = "Personnel administratif"
 
 class UserCreate(BaseModel):
     full_name: str
     email: EmailStr
-    password: str
-    role: str = "Lecteur"
+    user_type: TypeCompte
+    password: str    
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -28,52 +27,10 @@ class UserOut(BaseModel):
     id: int
     full_name: str
     email: EmailStr
-    role: str
+    user_type: TypeCompte
 
     class Config:
         from_attributes = True
-
-
-#========================================
-# Schema Student pour gérer les étudiants dans la bibliothèque
-#=========================================
-class StudentClass(str, Enum):
-    L1_BIG_DATA = "Licence 1 BIG DATA"
-    L2_BIG_DATA = "Licence 2 BIG DATA"
-    L3_BIG_DATA = "Licence 3 BIG DATA"
-    M1_IA = "Master 1 IA"
-    M2_IA = "Master 2 IA"
-    M1_FD = "Master 1 FD"
-    M2_FD = "Master 2 FD"
-
-class StudentBase(BaseModel):
-    matriculation_number: str = Field(min_length=1)
-    name: str = Field(min_length=2, max_length=255)
-    email: str = Field(pattern=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
-    classe: StudentClass
-
-class StudentSchema(StudentBase):    
-    date_created: date = Field(default_factory=date.today)
-    date_updated: date | None = None
-
-    class Config:
-        from_attributes = True
-
-# Schéma pour la CRÉATION (L'utilisateur ne voit/remplit pas l'ID)
-class StudentCreate(StudentBase):
-    date_created: date = Field(default_factory=date.today)
-
-class StudentUpdate(StudentBase):
-    date_updated: date = Field(default_factory=date.today)
-
-# Schéma pour la LECTURE (L'API retourne l'ID généré par la DB)
-# class StudentRead(StudentBase):
-#     id: int # On l'ajoute ici uniquement pour le retour
-#     date_created: date
-#     date_updated: date | None = None
-
-#     class Config:
-#         from_attributes = True
 
 #========================================
 # Schema Book pour gérer les livres dans la bibliothèque
@@ -115,7 +72,7 @@ class BookUpdate(BaseModel):
 # Schema Borrow pour gérer les emprunts de livres par les étudiants
 #========================================= 
 class BorrowSchema(BaseModel):
-    student_id: int
+    user_id: int
     book_id: int
     borrow_date: date
     return_date: date | None = None
@@ -127,24 +84,10 @@ class BorrowSchema(BaseModel):
         from_attributes = True
 
 class BorrowCreate(BaseModel):
-    student_id: int
+    user_id: int
     book_id: int
     borrow_date: date
     date_created: date = Field(default_factory=date.today)
-
-    class Config:
-        from_attributes = True
-
-#==========================================
-# Schema pour les statistiques
-#==========================================
-class DashboardStats(BaseModel):
-    total_students: int
-    total_books: int
-    active_borrows: int
-    available_books: int
-    borrows_by_class: List[Dict[str, int]]
-    top_books: List[Dict[str, int]]
 
     class Config:
         from_attributes = True

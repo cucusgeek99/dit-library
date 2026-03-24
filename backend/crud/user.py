@@ -2,7 +2,7 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from schemas.schemas import UserCreate, UserLogin, UserOut
 from models.models import UserDB
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, NoResultFound
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -18,7 +18,7 @@ def create_user(db: Session, user: UserCreate) -> UserOut:
         full_name = user.full_name,
         email = user.email,
         hashed_password = hashed_password,
-        role = user.role
+        user_type = user.user_type
     )
     try:
         db.add(new_user)
@@ -42,5 +42,47 @@ def get_user_by_id(db: Session, user_id: int) -> UserOut:
     try:
         user = db.query(UserDB).filter(UserDB.id == user_id).first()
         return user
+    except SQLAlchemyError as e:
+        raise e
+
+def delete_user_by_id(db: Session, user_id: int) -> None:
+    try:
+        student = db.query(UserDB).filter(UserDB.id == user_id).first()
+        if not student:
+            return NoResultFound()
+        
+        db.delete(student)
+        db.commit()
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise e
+
+#=============================
+# Opération etudiant
+#=============================
+def get_students(db: Session) -> list[UserOut]:
+    try:
+        list_students = db.query(UserDB).filter(UserDB.user_type == "Etudiant").order_by(UserDB.id).all()
+        return list_students
+    except SQLAlchemyError as e:
+        raise e
+    
+#=============================
+# Opération professeur
+#=============================
+def get_teachers(db: Session) -> list[UserOut]:
+    try:
+        list_students = db.query(UserDB).filter(UserDB.user_type == "Professeur").order_by(UserDB.id).all()
+        return list_students
+    except SQLAlchemyError as e:
+        raise e
+
+#=============================
+# Opération personnel administratif
+#=============================
+def get_pers_admin(db: Session) -> list[UserOut]:
+    try:
+        list_students = db.query(UserDB).filter(UserDB.user_type == "Personnel administratif").order_by(UserDB.id).all()
+        return list_students
     except SQLAlchemyError as e:
         raise e
