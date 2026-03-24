@@ -10,29 +10,11 @@ class UserDB(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     full_name = Column(String(255))
-    email = Column(String(100), unique=True, index=True)
+    email = Column(String(100), unique=True, index=True)    
+    user_type = Column(String(100), index=True, nullable=False)
     hashed_password = Column(String(255)) # On stocke le hash, pas le mot de passe clair
-    role = Column(String(30), default="Lecteur")
     date_created = Column(Date, nullable=False, default=datetime.now().date)
-    date_updated = Column(Date, nullable=True)
-    
-
-#========================================
-# Class Student pour gérer les étudiants dans la bibliothèque
-#========================================
-class Student(Base):
-    __tablename__ = "students"
-
-    id = Column(Integer, primary_key=True, index=True)
-    matriculation_number = Column(String(255), unique=True, index=True)
-    name = Column(String(255), index=True)
-    email = Column(String(255), unique=True, index=True)
-    classe= Column(String(255), index=True, nullable=True)
-    date_created = Column(Date, nullable=False, default=datetime.now().date)
-    date_updated = Column(Date, nullable=True)
-
-    def __repr__(self):
-        return f"{self.name} en ({self.classe})"
+    date_updated = Column(Date, nullable=True)    
 
 
 #========================================
@@ -63,7 +45,7 @@ class Borrow(Base):
     __tablename__ = "borrows"
 
     id = Column(Integer, primary_key=True, index=True)
-    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"))
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
     book_id = Column(Integer, ForeignKey("books.id", ondelete="CASCADE"))
     borrow_date = Column(DateTime, index=True, nullable=False, default=datetime.now)
     return_date = Column(DateTime, nullable=True)
