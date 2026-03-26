@@ -32,7 +32,6 @@ export default function LoansTable({ loans, onReturnLoan }) {
               <TableHead className="text-slate-600">Livre</TableHead>
               <TableHead className="text-slate-600">Emprunteur</TableHead>
               <TableHead className="text-slate-600">Date d’emprunt</TableHead>
-              <TableHead className="text-slate-600">Date limite</TableHead>
               <TableHead className="text-slate-600">Date de retour</TableHead>
               <TableHead className="text-slate-600">Statut</TableHead>
               <TableHead className="text-right text-slate-600">
@@ -45,7 +44,7 @@ export default function LoansTable({ loans, onReturnLoan }) {
             {loans.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={6}
                   className="h-28 text-center text-slate-500"
                 >
                   Aucun emprunt disponible pour le moment.
@@ -65,9 +64,6 @@ export default function LoansTable({ loans, onReturnLoan }) {
                   </TableCell>
                   <TableCell className="text-slate-600">
                     {loan.startDate}
-                  </TableCell>
-                  <TableCell className="text-slate-600">
-                    {loan.dueDate}
                   </TableCell>
                   <TableCell className="text-slate-600">
                     {loan.returnDate || "—"}

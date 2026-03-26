@@ -6,10 +6,7 @@ from schemas.schemas import BookCreate, BookUpdate
 from sqlalchemy.exc import IntegrityError
 
 def get_books(db: Session):
-    books = db.query(Book).order_by(Book.id).all()
-    if not books:
-        return None
-    return books
+    return db.query(Book).order_by(Book.id).all()
     
 
 def search_books(db: Session, q: str):

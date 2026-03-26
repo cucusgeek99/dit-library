@@ -60,7 +60,7 @@ def get_returned_borrows(db: Session) -> list[Borrow]:
     return borrows
 
 def get_borrow_by_student_id(db: Session, student_id: int) -> list[Borrow]:
-    borrows = db.query(Borrow).filter(Borrow.student_id == student_id).order_by(Borrow.date_created).all()
+    borrows = db.query(Borrow).filter(Borrow.user_id == student_id).order_by(Borrow.date_created).all()
     if not borrows:
         return []
     return borrows
@@ -72,7 +72,7 @@ def get_borrow_by_book_id(db: Session, book_id: int) -> list[Borrow]:
     return borrows
 
 def return_borrow(db: Session, book_id: int, std_id: int) -> Borrow:
-    borrow = db.query(Borrow).filter(Borrow.book_id == book_id and Borrow.student_id == std_id).first()
+    borrow = db.query(Borrow).filter(Borrow.book_id == book_id, Borrow.user_id == std_id, Borrow.is_returned == False).first()
     if not borrow:
         return None
     

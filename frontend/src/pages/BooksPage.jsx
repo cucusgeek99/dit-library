@@ -5,73 +5,41 @@ import BooksTable from "@/components/books/BooksTable";
 import InfoCard from "@/components/common/InfoCard";
 import TablePagination from "@/components/common/TablePagination";
 import { Input } from "@/components/ui/input";
-
-const initialBooks = [
-  {
-    id: 1,
-    title: "Clean Code",
-    author: "Robert C. Martin",
-    isbn: "9780132350884",
-    quantity: 4,
-    status: "Disponible",
-  },
-  {
-    id: 2,
-    title: "The Pragmatic Programmer",
-    author: "Andrew Hunt",
-    isbn: "9780201616224",
-    quantity: 2,
-    status: "Disponible",
-  },
-  {
-    id: 3,
-    title: "Designing Data-Intensive Applications",
-    author: "Martin Kleppmann",
-    isbn: "9781449373320",
-    quantity: 1,
-    status: "Disponible",
-  },
-  {
-    id: 4,
-    title: "Refactoring",
-    author: "Martin Fowler",
-    isbn: "9780201485677",
-    quantity: 3,
-    status: "Disponible",
-  },
-  {
-    id: 5,
-    title: "Code Complete",
-    author: "Steve McConnell",
-    isbn: "9780735619678",
-    quantity: 2,
-    status: "Disponible",
-  },
-  {
-    id: 6,
-    title: "Introduction to Algorithms",
-    author: "Thomas H. Cormen",
-    isbn: "9780262046305",
-    quantity: 5,
-    status: "Disponible",
-  },
-  {
-    id: 7,
-    title: "Domain-Driven Design",
-    author: "Eric Evans",
-    isbn: "9780321125217",
-    quantity: 2,
-    status: "Disponible",
-  },
-];
+import { getBooks, createBook, updateBook, deleteBook } from "@/lib/api";
 
 const ITEMS_PER_PAGE = 5;
 
+function mapBook(b) {
+  return {
+    id: b.id,
+    title: b.title,
+    author: b.author,
+    isbn: b.isbn,
+    quantity: b.total_copies ?? 1,
+    published_year: b.published_year,
+    is_available: b.is_available,
+    status: b.is_available ? "Disponible" : "Indisponible",
+  };
+}
+
 export default function BooksPage() {
-  const [books, setBooks] = useState(initialBooks);
+  const [books, setBooks] = useState([]);
   const [search, setSearch] = useState("");
   const [editingBook, setEditingBook] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+
+  const fetchBooks = async () => {
+    try {
+      const data = await getBooks();
+      setBooks(data.map(mapBook));
+    } catch {
+      // empty catalogue on error
+    }
+  };
+
+  useEffect(() => {
+    fetchBooks();
+  }, []);
 
   const filteredBooks = useMemo(() => {
     const term = search.toLowerCase().trim();
@@ -104,20 +72,33 @@ export default function BooksPage() {
     }
   }, [currentPage, totalPages]);
 
-  const handleSaveBook = (bookData) => {
-    const exists = books.some((book) => book.id === bookData.id);
-
-    if (exists) {
-      setBooks((prev) =>
-        prev.map((book) => (book.id === bookData.id ? bookData : book))
-      );
-    } else {
-      setBooks((prev) => [bookData, ...prev]);
+  const handleSaveBook = async (bookData) => {
+    const payload = {
+      title: bookData.title,
+      author: bookData.author,
+      isbn: bookData.isbn || null,
+      total_copies: Number(bookData.quantity) || 1,
+      published_year: Number(bookData.published_year) || new Date().getFullYear(),
+    };
+    try {
+      if (bookData._isEdit && bookData.id) {
+        await updateBook(bookData.id, payload);
+      } else {
+        await createBook(payload);
+      }
+      await fetchBooks();
+    } catch (e) {
+      console.error("Erreur sauvegarde livre", e);
     }
   };
 
-  const handleDeleteBook = (id) => {
-    setBooks((prev) => prev.filter((book) => book.id !== id));
+  const handleDeleteBook = async (id) => {
+    try {
+      await deleteBook(id);
+      await fetchBooks();
+    } catch (e) {
+      console.error("Erreur suppression livre", e);
+    }
   };
 
   const handleEditClick = (book) => {

@@ -17,6 +17,7 @@ const initialForm = {
   author: "",
   isbn: "",
   quantity: "",
+  published_year: String(new Date().getFullYear()),
 };
 
 export default function AddBookDialog({
@@ -36,6 +37,7 @@ export default function AddBookDialog({
         author: editBook.author || "",
         isbn: editBook.isbn || "",
         quantity: String(editBook.quantity ?? ""),
+        published_year: String(editBook.published_year ?? new Date().getFullYear()),
       });
       setOpen(true);
     }
@@ -75,21 +77,15 @@ export default function AddBookDialog({
     const payload = {
       title: formData.title.trim(),
       author: formData.author.trim(),
-      isbn: formData.isbn.trim(),
+      isbn: formData.isbn.trim() || null,
       quantity: Number(formData.quantity) || 1,
-      status: "Disponible",
+      published_year: Number(formData.published_year) || new Date().getFullYear(),
     };
 
     if (isEditMode) {
-      onAddBook({
-        ...editBook,
-        ...payload,
-      });
+      onAddBook({ ...editBook, ...payload, _isEdit: true });
     } else {
-      onAddBook({
-        id: Date.now(),
-        ...payload,
-      });
+      onAddBook({ ...payload });
     }
 
     handleClose();
@@ -155,17 +151,33 @@ export default function AddBookDialog({
               />
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="quantity">Quantité</Label>
-              <Input
-                id="quantity"
-                name="quantity"
-                type="number"
-                min="1"
-                value={formData.quantity}
-                onChange={handleChange}
-                placeholder="Ex. 3"
-              />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-2">
+                <Label htmlFor="quantity">Quantité</Label>
+                <Input
+                  id="quantity"
+                  name="quantity"
+                  type="number"
+                  min="1"
+                  value={formData.quantity}
+                  onChange={handleChange}
+                  placeholder="Ex. 3"
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="published_year">Année de publication</Label>
+                <Input
+                  id="published_year"
+                  name="published_year"
+                  type="number"
+                  min="1000"
+                  max="2100"
+                  value={formData.published_year}
+                  onChange={handleChange}
+                  placeholder="Ex. 2008"
+                />
+              </div>
             </div>
           </div>
 
