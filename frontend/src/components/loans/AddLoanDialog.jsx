@@ -12,67 +12,27 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-const initialForm = {
-  bookTitle: "",
-  borrowerName: "",
-  startDate: "",
-  dueDate: "",
-};
+const selectClass =
+  "flex h-10 w-full rounded-xl border border-slate-200/70 bg-background px-3 py-2 text-sm outline-none focus:border-[#154854]";
 
-export default function AddLoanDialog({ onSaveLoan }) {
+export default function AddLoanDialog({ onSaveLoan, books = [], users = [] }) {
+  const today = new Date().toISOString().slice(0, 10);
   const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState(initialForm);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const resetForm = () => {
-    setFormData(initialForm);
-  };
+  const [bookId, setBookId] = useState("");
+  const [userId, setUserId] = useState("");
+  const [borrowDate, setBorrowDate] = useState(today);
 
   const handleClose = () => {
     setOpen(false);
-    resetForm();
-  };
-
-  const resolveStatus = (dueDate) => {
-    const today = new Date();
-    const limit = new Date(dueDate);
-
-    today.setHours(0, 0, 0, 0);
-    limit.setHours(0, 0, 0, 0);
-
-    return limit < today ? "En retard" : "En cours";
+    setBookId("");
+    setUserId("");
+    setBorrowDate(today);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    if (
-      !formData.bookTitle.trim() ||
-      !formData.borrowerName.trim() ||
-      !formData.startDate ||
-      !formData.dueDate
-    ) {
-      return;
-    }
-
-    const newLoan = {
-      id: Date.now(),
-      bookTitle: formData.bookTitle.trim(),
-      borrowerName: formData.borrowerName.trim(),
-      startDate: formData.startDate,
-      dueDate: formData.dueDate,
-      returnDate: null,
-      status: resolveStatus(formData.dueDate),
-    };
-
-    onSaveLoan(newLoan);
+    if (!bookId || !userId || !borrowDate) return;
+    onSaveLoan({ bookId: Number(bookId), userId: Number(userId), borrowDate });
     handleClose();
   };
 
@@ -91,56 +51,57 @@ export default function AddLoanDialog({ onSaveLoan }) {
         <DialogHeader>
           <DialogTitle>Ajouter un emprunt</DialogTitle>
           <DialogDescription>
-            Renseignez les informations relatives au nouvel emprunt.
+            Sélectionnez le livre et l’étudiant pour créer un emprunt.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="bookTitle">Titre du livre</Label>
+              <Label htmlFor="bookId">Livre</Label>
+              <select
+                id="bookId"
+                value={bookId}
+                onChange={(e) => setBookId(e.target.value)}
+                className={selectClass}
+                required
+              >
+                <option value="">— Sélectionner un livre —</option>
+                {books.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="borrowDate">Date d'emprunt</Label>
               <Input
-                id="bookTitle"
-                name="bookTitle"
-                value={formData.bookTitle}
-                onChange={handleChange}
-                placeholder="Ex. Clean Code"
+                id="borrowDate"
+                type="date"
+                value={borrowDate}
+                onChange={(e) => setBorrowDate(e.target.value)}
+                required
               />
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="borrowerName">Nom de l’emprunteur</Label>
-              <Input
-                id="borrowerName"
-                name="borrowerName"
-                value={formData.borrowerName}
-                onChange={handleChange}
-                placeholder="Ex. Alice Johnson"
-              />
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-2">
-                <Label htmlFor="startDate">Date d’emprunt</Label>
-                <Input
-                  id="startDate"
-                  name="startDate"
-                  type="date"
-                  value={formData.startDate}
-                  onChange={handleChange}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="dueDate">Date limite</Label>
-                <Input
-                  id="dueDate"
-                  name="dueDate"
-                  type="date"
-                  value={formData.dueDate}
-                  onChange={handleChange}
-                />
-              </div>
+              <Label htmlFor="userId">Emprunteur</Label>
+              <select
+                id="userId"
+                value={userId}
+                onChange={(e) => setUserId(e.target.value)}
+                className={selectClass}
+                required
+              >
+                <option value="">— Sélectionner un utilisateur —</option>
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.full_name} ({u.user_type})
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 

@@ -1,120 +1,102 @@
-# 📚 Bibliothèque Numérique Microservices - Frontend
+# DIT Library — Frontend
 
-## 🧾 Introduction
+Interface web du système de gestion de bibliothèque numérique du **Dakar Institut of Technology**.
+Développée dans le cadre de l'examen pratique DevOps.
 
-Ce projet est le **frontend d’un système de gestion de la bibliothèque numérique** développé dans le cadre de **l'examen pratique DevOps**.
+## Stack technique
 
-L’application a pour objectif de fournir une interface moderne permettant de gérer efficacement :
-
-- les livres 📖
-- les utilisateurs 👥
-- les emprunts 🔄
-<!-- - les profils 👤   -->
-
----
-
-## 🛠️ Technologies utilisées
-
-- **React** : Bibliothèque JavaScript pour construire des interfaces utilisateur.
-- **Vite** : Outil de build rapide pour les projets frontend.
-- **Tailwind CSS** : Framework CSS utilitaire pour un design rapide et responsive.
-- **ShadCN UI** : Composants UI modernes et personnalisables pour React.
-- **Lucide React** pour les icônes
-- **React Router** pour la gestion des routes
+- **React 19** — bibliothèque UI
+- **Vite** — build tool et serveur de développement
+- **Tailwind CSS** — styles utilitaires
+- **ShadCN UI** — composants UI (Button, Dialog, Table, Badge...)
+- **Lucide React** — icônes
+- **React Router v6** — routing côté client
+- **Axios** — appels HTTP vers le backend
 
 ---
 
-## 🚀 Lancer le projet en local
+## Prérequis
 
-### 1. Cloner le projet
+Le backend FastAPI doit être lancé sur http://localhost:8000 avant de démarrer le frontend.
+Voir `../backend/README.md` pour l'installation du backend.
 
-```bash
-git clone https://github.com/DonBos27/gestion-bibliotheque-frontend
-cd frontend-library
-```
+---
 
-### 2. Installer les dépendances
-
-#### Dépendances générales
+## Installation et lancement
 
 ```bash
 npm install
-```
-
-#### Tailwind CSS
-
-```bash
-npm install tailwindcss @tailwindcss/vite
-```
-
-#### ShadCN UI
-
-Initialisation de ShadCN UI :
-
-```bash
-npx shadcn@latest init -t vite
-```
-
-Installation des composants ShadCN UI :
-
-```bash
-npx shadcn@latest add button
-npx shadcn@latest add input
-npx shadcn@latest add label
-npx shadcn@latest add dialog
-npx shadcn@latest add table
-npx shadcn@latest add badge
-npx shadcn@latest add alert-dialog
-npx shadcn@latest add dropdown-menu
-npx shadcn@latest add avatar
-npx shadcn@latest add card
-```
-
-### 3. Lancer le serveur de développement
-
-```bash
 npm run dev
 ```
 
-### 4. Accéder à l’application
+Application disponible sur http://localhost:5173
 
-Ouvrez votre navigateur et rendez-vous à l’adresse suivante :
+---
+
+## Structure du projet
 
 ```
-http://localhost:5173
+frontend/
+├── public/
+└── src/
+    ├── components/
+    │   ├── auth/           # LoginForm, SignupForm
+    │   ├── books/          # BooksTable, AddBookDialog
+    │   ├── loans/          # LoansTable, AddLoanDialog
+    │   ├── users/          # UsersTable, AddUserDialog
+    │   ├── common/         # InfoCard, TablePagination
+    │   └── layout/         # AppLayout, RoleGuard
+    ├── context/
+    │   └── AuthContext.jsx # Authentification (login, logout, token)
+    ├── lib/
+    │   └── api.js          # Instance Axios + fonctions d'appel API
+    ├── pages/
+    │   ├── LoginPage.jsx
+    │   ├── SignupPage.jsx
+    │   ├── BooksPage.jsx
+    │   ├── UsersPage.jsx
+    │   ├── LoansPage.jsx
+    │   └── ProfilePage.jsx
+    ├── routes/
+    │   └── AppRoutes.jsx   # Routes protégées par rôle
+    ├── App.jsx
+    └── main.jsx
 ```
 
 ---
 
-## 📁 Structure du projet
+## Pages et accès par rôle
 
-```
-frontend-library/
-├── public/             # Fichiers statiques
-├── src/                # Code source de l'application
-│   ├── components/     # Composants réutilisables
-|   ├── data/           # Fichiers de données (ex: livres, utilisateurs)
-│   ├── pages/          # Pages de l'application
-|   ├── routes/         # Configuration des routes
-│   ├── App.jsx         # Composant principal
-|   ├── index.css       # Styles globaux
-│   └── main.jsx        # Point d'entrée de l'application
-├── package.json        # Dépendances et scripts
-├── vite.config.js      # Configuration de Vite
-└── README.md           # Documentation du projet
-```
+| Route      | Description              | Rôles autorisés                           |
+|------------|--------------------------|-------------------------------------------|
+| `/login`   | Connexion                | Tous                                      |
+| `/signup`  | Création de compte       | Tous                                      |
+| `/books`   | Gestion des livres       | Personnel administratif, Professeur, Etudiant |
+| `/users`   | Gestion des utilisateurs | Personnel administratif uniquement        |
+| `/loans`   | Gestion des emprunts     | Personnel administratif, Professeur, Etudiant |
+| `/profile` | Profil utilisateur       | Tous (connectés)                          |
 
 ---
 
-## 💻 Pages disponibles
+## Authentification
 
-Selon la configuration actuelle, les principales routes sont :
+Le token JWT est stocké dans le `localStorage` après connexion (`access_token` et `user`).
+Il est automatiquement attaché à chaque requête API via un intercepteur Axios.
 
-- /login → page de connexion
-- /signup → page de création de compte
-- /books → gestion des livres
-- /users → gestion des utilisateurs
-- /loans → gestion des emprunts
-- /profile → profil utilisateur
+La session est restaurée au rechargement de la page.
+La déconnexion efface le `localStorage` et redirige vers `/login`.
 
 ---
+
+## Connexion au backend
+
+Toutes les requêtes sont envoyées à `http://localhost:8000`.
+La configuration se trouve dans `src/lib/api.js`.
+
+Pour modifier l'URL du backend, changer `baseURL` dans ce fichier :
+
+```js
+const api = axios.create({
+  baseURL: "http://localhost:8000",
+});
+```

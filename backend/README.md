@@ -1,76 +1,156 @@
-# DIT Library API
+# DIT Library — Backend
 
-Ce projet est une API développée avec FastAPI pour gérer la bibliothèque du Dakar Institut of Technology (DIT).
+API REST développée avec **FastAPI** pour gérer la bibliothèque du Dakar Institut of Technology.
 
-## Prérequis
-- Python 3.8 ou supérieur
-- pip (gestionnaire de paquets Python)
+## Stack technique
 
-## Installation et lancement
+- **Python 3.10+**
+- **FastAPI** — framework web
+- **SQLAlchemy** — ORM
+- **Alembic** — migrations de base de données
+- **MySQL 8** (via Docker)
+- **PyJWT** — authentification JWT
+- **bcrypt** — hachage des mots de passe
+- **mysql-connector-python** — driver MySQL
 
-### 1. Cloner le projet
+---
+
+## Installation
+
+### 1. Démarrer MySQL avec Docker
+
+```bash
+docker network create dit-library
+
+docker run -d \
+  --name mysql_server \
+  --network dit-library \
+  -e MYSQL_ROOT_PASSWORD=admin123 \
+  -e MYSQL_DATABASE=dit-library-bd \
+  -e MYSQL_USER=admin \
+  -e MYSQL_PASSWORD=admin123 \
+  -p 3306:3306 \
+  mysql:8.4
 ```
-git clone <url-du-repo>
-cd dit-library-api
 
-### 2. Création d'un environnement viruel
+La chaîne de connexion configurée dans `db/database.py` :
 ```
-python3 -m venv .venv 
-- source .venv/bin/activate # pour linux 
-- .venv/Scripts/activate # pour windows
+mysql+mysqlconnector://admin:admin123@localhost:3306/dit-library-bd
+```
 
-### 3. Installer les dépendances
-```
+### 2. Environnement Python
+
+```bash
+python3 -m venv venv
+source venv/bin/activate    # Linux/macOS
+# venv\Scripts\activate     # Windows
+
 pip install -r requirements.txt
 ```
 
+### 3. Migrations Alembic
+
+```bash
+# Première fois — générer les tables
+alembic revision --autogenerate -m "initial tables"
+alembic upgrade head
+
+# Après modification d'un modèle
+alembic revision --autogenerate -m "description du changement"
+alembic upgrade head
+```
+
 ### 4. Lancer l'API
+
+```bash
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
-uvicorn main:app --reload
+
+API disponible sur http://localhost:8000
+Documentation interactive (Swagger) : http://localhost:8000/docs
+
+---
+
+## Structure du projet
+
+```
+backend/
+├── alembic/            # Migrations de base de données
+│   ├── versions/       # Fichiers de migration générés
+│   └── env.py          # Configuration Alembic
+├── crud/               # Fonctions d'accès aux données
+│   ├── book.py         # CRUD livres
+│   ├── borrow.py       # CRUD emprunts
+│   └── user.py         # CRUD utilisateurs
+├── db/
+│   └── database.py     # Connexion SQLAlchemy + session
+├── models/
+│   └── models.py       # Modèles ORM (Book, User, Borrow)
+├── schemas/
+│   └── schemas.py      # Schémas Pydantic (validation)
+├── main.py             # Point d'entrée FastAPI + toutes les routes
+├── requirements.txt
+└── alembic.ini
 ```
 
-- `main` : nom du fichier principal (modifiez si besoin)
-- `app` : nom de l'instance FastAPI
-- `--reload` : pour le développement (recharge automatique)
+---
 
-L'API sera accessible sur [http://localhost:8000](http://localhost:8000).
+## Endpoints principaux
 
-## Compatibilité
-Ce projet fonctionne sur tous les systèmes d'exploitation (Windows, macOS, Linux) tant que Python et pip sont installés.
+### Authentification
 
-## Documentation
-La documentation interactive est disponible sur [http://localhost:8000/docs](http://localhost:8000/docs).
+| Méthode | Route           | Description              | Rôle requis |
+|---------|-----------------|--------------------------|-------------|
+| POST    | `/user/login`   | Connexion (JWT)          | —           |
+| POST    | `/user/create`  | Créer un utilisateur     | —           |
 
+### Livres
 
-## UTILISATION DU PACKAGE ALEMBIC
-Le package alembic nous permet de gérer proprement notre base de données
+| Méthode | Route                   | Description         | Rôle requis              |
+|---------|-------------------------|---------------------|--------------------------|
+| GET     | `/books`                | Lister les livres   | —                        |
+| POST    | `/book/create`          | Ajouter un livre    | Personnel / Professeur   |
+| PUT     | `/book/{id}/update`     | Modifier un livre   | Personnel / Professeur   |
+| DELETE  | `/book/{id}/delete`     | Supprimer un livre  | Personnel / Professeur   |
 
-# INSTALLATION
-pip install alembic
+### Utilisateurs
 
-# INITIALISATION
-alembic init alembic
+| Méthode | Route               | Description             | Rôle requis           |
+|---------|---------------------|-------------------------|-----------------------|
+| GET     | `/users/`           | Lister les utilisateurs | Personnel             |
+| DELETE  | `/user/{id}/delete` | Supprimer un utilisateur| Personnel             |
 
-# CONFIGURATION
-- Dans le fichier alembic.ini
-Ouvrez le fichier alembic.ini qui se trouve à la racine du projet, cherchez la ligne : 
-sqlalchemy.url = mettez votre chaine de connexion ici
+### Emprunts
 
-- Dans le fichier : env.py
-Rendez vous dans : alembic/env.py et modifier rajouter ceci 
-* from db.database import Base 
-pour importe la Base
+| Méthode | Route                              | Description          | Rôle requis |
+|---------|------------------------------------|----------------------|-------------|
+| GET     | `/borrows`                         | Lister les emprunts  | —           |
+| POST    | `/borrow/create`                   | Créer un emprunt     | Etudiant    |
+| POST    | `/borrow/{book_id}/{user_id}/return` | Retourner un livre | Etudiant    |
 
-* from models.models import *
-pour importer tous nos models afin que alembic soit au courant des models
+---
 
-* target_metadata = Base.metadata
-recherchez la ligne target_metadata = None, enlevez le None et mettez les metadata de la Base
+## Types de comptes
 
-# LES MIGRATIONS
-- alembic revision --autogenerate -m "Message ici"
-- alembic upgrade head
+| `user_type`               | Permissions                           |
+|---------------------------|---------------------------------------|
+| `Etudiant`                | Créer et retourner des emprunts       |
+| `Professeur`              | Gérer les livres, consulter emprunts  |
+| `Personnel administratif` | Accès complet                         |
 
-# AJOUTER LE MODEL USERS
-- alembic revision --autogenerate -m "creation du model user"
-- alembic upgrade head
+---
+
+## Configuration Alembic
+
+`alembic/env.py` importe la `Base` et tous les modèles pour que les migrations soient détectées automatiquement :
+
+```python
+from db.database import Base
+from models.models import *
+target_metadata = Base.metadata
+```
+
+`alembic.ini` — chaîne de connexion :
+```
+sqlalchemy.url = mysql+mysqlconnector://admin:admin123@localhost:3306/dit-library-bd
+```
