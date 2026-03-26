@@ -18,10 +18,9 @@ export default function AppNavbar({
   onLogout = () => console.log("Logout clicked"),
 }) {
   const getRoleLabel = () => {
-    if (role === "super_admin") return "Super administrateur";
-    if (role === "agent_bibliotheque") return "Agent de bibliothèque";
-    if (role === "gestion_utilisateurs") return "Gestionnaire utilisateurs";
-    if (role === "lecteur") return "Lecteur";
+    if (role === "Personnel administratif") return "Personnel administratif";
+    if (role === "Professeur") return "Professeur";
+    if (role === "Etudiant") return "Étudiant";
     return "Utilisateur";
   };
 
