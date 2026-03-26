@@ -9,7 +9,6 @@ import { saveAuthData } from "@/lib/auth";
 
 export default function LoginForm() {
   const navigate = useNavigate();
-  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -141,12 +140,6 @@ export default function LoginForm() {
             Mot de passe oublié ?
           </button>
         </div>
-
-        {error && (
-          <p className="rounded-xl bg-red-50 px-4 py-2 text-sm text-red-600">
-            {error}
-          </p>
-        )}
 
         <Button
           type="submit"
