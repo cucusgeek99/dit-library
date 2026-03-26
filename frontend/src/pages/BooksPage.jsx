@@ -6,6 +6,7 @@ import InfoCard from "@/components/common/InfoCard";
 import TablePagination from "@/components/common/TablePagination";
 import { Input } from "@/components/ui/input";
 import { getBooks, createBook, updateBook, deleteBook } from "@/lib/api";
+import { getStoredUser } from "@/lib/auth";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -27,6 +28,10 @@ export default function BooksPage() {
   const [search, setSearch] = useState("");
   const [editingBook, setEditingBook] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const currentUser = getStoredUser();
+  const canManageBooks =
+    currentUser?.user_type === "Personnel administratif" ||
+    currentUser?.user_type === "Professeur";
 
   const fetchBooks = async () => {
     try {
@@ -78,7 +83,8 @@ export default function BooksPage() {
       author: bookData.author,
       isbn: bookData.isbn || null,
       total_copies: Number(bookData.quantity) || 1,
-      published_year: Number(bookData.published_year) || new Date().getFullYear(),
+      published_year:
+        Number(bookData.published_year) || new Date().getFullYear(),
     };
     try {
       if (bookData._isEdit && bookData.id) {
@@ -89,6 +95,11 @@ export default function BooksPage() {
       await fetchBooks();
     } catch (e) {
       console.error("Erreur sauvegarde livre", e);
+      console.error("Réponse backend :", e?.response?.data);
+      alert(
+        e?.response?.data?.detail ||
+          "Impossible d'enregistrer le livre."
+      );
     }
   };
 
@@ -117,11 +128,13 @@ export default function BooksPage() {
           </p>
         </div>
 
-        <AddBookDialog
-          onAddBook={handleSaveBook}
-          onEditBook={setEditingBook}
-          editBook={editingBook}
-        />
+        {canManageBooks && (
+          <AddBookDialog
+            onAddBook={handleSaveBook}
+            onEditBook={setEditingBook}
+            editBook={editingBook}
+          />
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
