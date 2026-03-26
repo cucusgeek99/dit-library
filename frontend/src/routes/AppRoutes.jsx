@@ -69,7 +69,11 @@ export default function AppRoutes() {
               element={
                 <RoleGuard
                   userRole={currentUser.role}
-                  allowedRoles={["Personnel administratif", "Etudiant"]}
+                  allowedRoles={[
+                    "Personnel administratif",
+                    "Professeur",
+                    "Etudiant",
+                  ]}
                 >
                   <LoansPage />
                 </RoleGuard>

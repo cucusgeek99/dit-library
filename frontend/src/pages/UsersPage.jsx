@@ -127,7 +127,7 @@ export default function UsersPage() {
 
         <InfoCard
           title="Étudiants"
-          value={users.filter((user) => user.userType === "Étudiant").length}
+          value={users.filter((user) => user.userType === "Etudiant").length}
           description="Utilisateurs de type étudiant"
           icon={GraduationCap}
           badgeText="Académique"
@@ -136,7 +136,7 @@ export default function UsersPage() {
 
         <InfoCard
           title="Personnel & professeurs"
-          value={users.filter((user) => user.userType !== "Étudiant").length}
+          value={users.filter((user) => user.userType !== "Personnel administratif").length}
           description="Personnel administratif et enseignant"
           icon={BriefcaseBusiness}
           badgeText="Encadrement"

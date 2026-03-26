@@ -11,7 +11,12 @@ import {
 import { Button } from "@/components/ui/button";
 import DeleteConfirmDialog from "@/components/common/DeleteConfirmDialog";
 
-export default function BooksTable({ books, onDeleteBook, onEditClick }) {
+export default function BooksTable({
+  books,
+  onDeleteBook,
+  onEditClick,
+  canManageBooks = false,
+}) {
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200/40 bg-white shadow-sm shadow-slate-200/20">
       <div className="overflow-x-auto">
@@ -67,22 +72,26 @@ export default function BooksTable({ books, onDeleteBook, onEditClick }) {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="rounded-xl border-slate-200/40"
-                        onClick={() => onEditClick(book)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
+                    {canManageBooks ? (
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="rounded-xl border-slate-200/40"
+                          onClick={() => onEditClick(book)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
 
-                      <DeleteConfirmDialog
-                        title="Supprimer ce livre ?"
-                        description={`Le livre "${book.title}" sera supprimé du catalogue. Cette action est irréversible.`}
-                        onConfirm={() => onDeleteBook(book.id)}
-                      />
-                    </div>
+                        <DeleteConfirmDialog
+                          title="Supprimer ce livre ?"
+                          description={`Le livre "${book.title}" sera supprimé du catalogue. Cette action est irréversible.`}
+                          onConfirm={() => onDeleteBook(book.id)}
+                        />
+                      </div>
+                    ) : (
+                      <span className="text-sm text-slate-400">—</span>
+                    )}
                   </TableCell>
                 </TableRow>
               ))

@@ -30,8 +30,8 @@ export default function BooksPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const currentUser = getStoredUser();
   const canManageBooks =
-    currentUser?.user_type === "Personnel administratif" ||
-    currentUser?.user_type === "Professeur";
+    currentUser?.user_type === "Personnel administratif" 
+    // currentUser?.user_type === "Professeur";
 
   const fetchBooks = async () => {
     try {
@@ -96,10 +96,7 @@ export default function BooksPage() {
     } catch (e) {
       console.error("Erreur sauvegarde livre", e);
       console.error("Réponse backend :", e?.response?.data);
-      alert(
-        e?.response?.data?.detail ||
-          "Impossible d'enregistrer le livre."
-      );
+      alert(e?.response?.data?.detail || "Impossible d'enregistrer le livre.");
     }
   };
 
@@ -191,6 +188,7 @@ export default function BooksPage() {
           books={paginatedBooks}
           onDeleteBook={handleDeleteBook}
           onEditClick={handleEditClick}
+          canManageBooks={canManageBooks}
         />
 
         <TablePagination

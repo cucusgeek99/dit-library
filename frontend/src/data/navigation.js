@@ -17,7 +17,7 @@ export const navigationItems = [
         to: "/loans",
         label: "Emprunts",
         icon: Repeat,
-        roles: ["Personnel administratif", "Etudiant"],
+        roles: ["Personnel administratif", "Professeur", "Etudiant"],
     },
     {
         to: "/profile",
