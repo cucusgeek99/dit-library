@@ -5,59 +5,38 @@ import UsersTable from "@/components/users/UsersTable";
 import InfoCard from "@/components/common/InfoCard";
 import TablePagination from "@/components/common/TablePagination";
 import { Input } from "@/components/ui/input";
-
-const initialUsers = [
-  {
-    id: 1,
-    fullName: "Alice Johnson",
-    email: "alice@dit.ac.za",
-    userType: "Étudiant",
-    status: "Actif",
-  },
-  {
-    id: 2,
-    fullName: "Dr. Patrick Moyo",
-    email: "patrick@dit.ac.za",
-    userType: "Professeur",
-    status: "Actif",
-  },
-  {
-    id: 3,
-    fullName: "Ruth Ncube",
-    email: "ruth@dit.ac.za",
-    userType: "Personnel administratif",
-    status: "Actif",
-  },
-  {
-    id: 4,
-    fullName: "Jean Mukendi",
-    email: "jean@dit.ac.za",
-    userType: "Étudiant",
-    status: "Actif",
-  },
-  {
-    id: 5,
-    fullName: "Sarah Bello",
-    email: "sarah@dit.ac.za",
-    userType: "Étudiant",
-    status: "Actif",
-  },
-  {
-    id: 6,
-    fullName: "David Tchala",
-    email: "david@dit.ac.za",
-    userType: "Professeur",
-    status: "Actif",
-  },
-];
+import { getUsers, createUser, deleteUser } from "@/lib/api";
 
 const ITEMS_PER_PAGE = 5;
 
+function mapUser(u) {
+  return {
+    id: u.id,
+    fullName: u.full_name,
+    email: u.email,
+    userType: u.user_type,
+    status: "Actif",
+  };
+}
+
 export default function UsersPage() {
-  const [users, setUsers] = useState(initialUsers);
+  const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
   const [editingUser, setEditingUser] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+
+  const fetchUsers = async () => {
+    try {
+      const data = await getUsers();
+      setUsers(data.map(mapUser));
+    } catch {
+      // empty on error
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const filteredUsers = useMemo(() => {
     const term = search.toLowerCase().trim();
@@ -90,20 +69,27 @@ export default function UsersPage() {
     }
   }, [currentPage, totalPages]);
 
-  const handleSaveUser = (userData) => {
-    const exists = users.some((user) => user.id === userData.id);
-
-    if (exists) {
-      setUsers((prev) =>
-        prev.map((user) => (user.id === userData.id ? userData : user))
-      );
-    } else {
-      setUsers((prev) => [userData, ...prev]);
+  const handleSaveUser = async (userData) => {
+    try {
+      await createUser({
+        full_name: userData.fullName,
+        email: userData.email,
+        user_type: userData.userType,
+        password: userData.password,
+      });
+      await fetchUsers();
+    } catch (e) {
+      console.error("Erreur création utilisateur", e);
     }
   };
 
-  const handleDeleteUser = (id) => {
-    setUsers((prev) => prev.filter((user) => user.id !== id));
+  const handleDeleteUser = async (id) => {
+    try {
+      await deleteUser(id);
+      await fetchUsers();
+    } catch (e) {
+      console.error("Erreur suppression utilisateur", e);
+    }
   };
 
   const handleEditClick = (user) => {

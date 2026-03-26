@@ -10,70 +10,55 @@ import LoansTable from "@/components/loans/LoansTable";
 import InfoCard from "@/components/common/InfoCard";
 import TablePagination from "@/components/common/TablePagination";
 import { Input } from "@/components/ui/input";
-
-const initialLoans = [
-  {
-    id: 1,
-    bookTitle: "Clean Code",
-    borrowerName: "Alice Johnson",
-    startDate: "2026-03-10",
-    dueDate: "2026-03-24",
-    returnDate: null,
-    status: "En cours",
-  },
-  {
-    id: 2,
-    bookTitle: "The Pragmatic Programmer",
-    borrowerName: "Ruth Ncube",
-    startDate: "2026-03-05",
-    dueDate: "2026-03-15",
-    returnDate: null,
-    status: "En retard",
-  },
-  {
-    id: 3,
-    bookTitle: "Designing Data-Intensive Applications",
-    borrowerName: "Dr. Patrick Moyo",
-    startDate: "2026-03-01",
-    dueDate: "2026-03-12",
-    returnDate: "2026-03-11",
-    status: "Retourné",
-  },
-  {
-    id: 4,
-    bookTitle: "Code Complete",
-    borrowerName: "Jean Mukendi",
-    startDate: "2026-03-14",
-    dueDate: "2026-03-28",
-    returnDate: null,
-    status: "En cours",
-  },
-  {
-    id: 5,
-    bookTitle: "Refactoring",
-    borrowerName: "Sarah Bello",
-    startDate: "2026-03-08",
-    dueDate: "2026-03-18",
-    returnDate: null,
-    status: "En retard",
-  },
-  {
-    id: 6,
-    bookTitle: "Domain-Driven Design",
-    borrowerName: "David Tchala",
-    startDate: "2026-03-02",
-    dueDate: "2026-03-12",
-    returnDate: "2026-03-10",
-    status: "Retourné",
-  },
-];
+import { getBorrows, createBorrow, returnBorrow, getBooks, getUsers } from "@/lib/api";
 
 const ITEMS_PER_PAGE = 5;
 
+function loanStatus(b) {
+  if (b.is_returned) return "Retourné";
+  return "En cours";
+}
+
+function mapLoan(b, booksMap, usersMap) {
+  return {
+    id: b.id,
+    bookId: b.book_id,
+    userId: b.user_id,
+    bookTitle: booksMap[b.book_id] ?? `Livre #${b.book_id}`,
+    borrowerName: usersMap[b.user_id] ?? `Utilisateur #${b.user_id}`,
+    startDate: b.borrow_date ? b.borrow_date.slice(0, 10) : null,
+    returnDate: b.is_returned && b.return_date ? b.return_date.slice(0, 10) : null,
+    status: loanStatus(b),
+  };
+}
+
 export default function LoansPage() {
-  const [loans, setLoans] = useState(initialLoans);
+  const [loans, setLoans] = useState([]);
+  const [books, setBooks] = useState([]);
+  const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+
+  const fetchLoans = async (booksMap = {}, usersMap = {}) => {
+    try {
+      const data = await getBorrows();
+      setLoans(data.map((b) => mapLoan(b, booksMap, usersMap)));
+    } catch {
+      // empty on error
+    }
+  };
+
+  useEffect(() => {
+    Promise.all([getBooks().catch(() => []), getUsers().catch(() => [])]).then(
+      ([booksData, usersData]) => {
+        setBooks(booksData);
+        setUsers(usersData);
+        const booksMap = Object.fromEntries(booksData.map((b) => [b.id, b.title]));
+        const usersMap = Object.fromEntries(usersData.map((u) => [u.id, u.full_name]));
+        fetchLoans(booksMap, usersMap);
+      }
+    );
+  }, []);
 
   const filteredLoans = useMemo(() => {
     const term = search.toLowerCase().trim();
@@ -106,24 +91,32 @@ export default function LoansPage() {
     }
   }, [currentPage, totalPages]);
 
-  const handleSaveLoan = (loanData) => {
-    setLoans((prev) => [loanData, ...prev]);
+  const handleSaveLoan = async (loanData) => {
+    try {
+      await createBorrow({
+        book_id: loanData.bookId,
+        user_id: loanData.userId,
+        borrow_date: loanData.borrowDate,
+      });
+      const booksMap = Object.fromEntries(books.map((b) => [b.id, b.title]));
+      const usersMap = Object.fromEntries(users.map((u) => [u.id, u.full_name]));
+      await fetchLoans(booksMap, usersMap);
+    } catch (e) {
+      console.error("Erreur création emprunt", e);
+    }
   };
 
-  const handleReturnLoan = (id) => {
-    const today = new Date().toISOString().slice(0, 10);
-
-    setLoans((prev) =>
-      prev.map((loan) =>
-        loan.id === id
-          ? {
-              ...loan,
-              returnDate: today,
-              status: "Retourné",
-            }
-          : loan
-      )
-    );
+  const handleReturnLoan = async (id) => {
+    const loan = loans.find((l) => l.id === id);
+    if (!loan) return;
+    try {
+      await returnBorrow(loan.bookId, loan.userId);
+      const booksMap = Object.fromEntries(books.map((b) => [b.id, b.title]));
+      const usersMap = Object.fromEntries(users.map((u) => [u.id, u.full_name]));
+      await fetchLoans(booksMap, usersMap);
+    } catch (e) {
+      console.error("Erreur retour emprunt", e);
+    }
   };
 
   return (
@@ -138,7 +131,7 @@ export default function LoansPage() {
           </p>
         </div>
 
-        <AddLoanDialog onSaveLoan={handleSaveLoan} />
+        <AddLoanDialog onSaveLoan={handleSaveLoan} books={books} users={users} />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

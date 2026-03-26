@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-import crud.student as crud_student
 import crud.book as crud_book
 import crud.borrow as ops_borrow
 import crud.user as ops_user
@@ -211,10 +210,7 @@ def create_book(book: BookCreate, db: Session = Depends(get_db), _ = Depends(Rol
 @app.get("/books", tags=["Livres"])
 def get_books(db: Session = Depends(get_db)):
     try:
-        books = crud_book.get_books(db)
-        if not books:
-            raise HTTPException(status_code=404, detail="Aucun livre trouvé")
-        return books
+        return crud_book.get_books(db)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des livres {e}")
     
@@ -273,10 +269,7 @@ def create_borrow(borrow: BorrowCreate, db: Session = Depends(get_db), _ = Depen
 @app.get("/borrows", tags=["Emprunts"])
 def get_borrows(db: Session = Depends(get_db)):
     try:
-        borrows = ops_borrow.get_borrows(db)
-        if not borrows:
-            raise HTTPException(status_code=404, detail="Aucun emprunt trouvé")
-        return borrows
+        return ops_borrow.get_borrows(db)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des emprunts {e}")
 

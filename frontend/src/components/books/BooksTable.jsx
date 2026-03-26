@@ -56,7 +56,13 @@ export default function BooksTable({ books, onDeleteBook, onEditClick }) {
                     {book.quantity}
                   </TableCell>
                   <TableCell>
-                    <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+                    <Badge
+                      className={
+                        book.status === "Disponible"
+                          ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
+                          : "bg-red-100 text-red-700 hover:bg-red-100"
+                      }
+                    >
                       {book.status}
                     </Badge>
                   </TableCell>

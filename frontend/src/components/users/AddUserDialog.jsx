@@ -15,7 +15,8 @@ import {
 const initialForm = {
   fullName: "",
   email: "",
-  userType: "Étudiant",
+  userType: "Etudiant",
+  password: "",
 };
 
 export default function AddUserDialog({
@@ -33,7 +34,8 @@ export default function AddUserDialog({
       setFormData({
         fullName: editUser.fullName || "",
         email: editUser.email || "",
-        userType: editUser.userType || "Étudiant",
+        userType: editUser.userType || "Etudiant",
+        password: "",
       });
       setOpen(true);
     }
@@ -70,19 +72,13 @@ export default function AddUserDialog({
       fullName: formData.fullName.trim(),
       email: formData.email.trim(),
       userType: formData.userType,
-    //   status: "Actif",
+      password: formData.password,
     };
 
     if (isEditMode) {
-      onSaveUser({
-        ...editUser,
-        ...payload,
-      });
+      onSaveUser({ ...editUser, ...payload });
     } else {
-      onSaveUser({
-        id: Date.now(),
-        ...payload,
-      });
+      onSaveUser(payload);
     }
 
     handleClose();
@@ -147,11 +143,26 @@ export default function AddUserDialog({
                 onChange={handleChange}
                 className="flex h-10 w-full rounded-xl border border-slate-200/70 bg-background px-3 py-2 text-sm outline-none focus:border-[#154854]"
               >
-                <option>Étudiant</option>
-                <option>Professeur</option>
-                <option>Personnel administratif</option>
+                <option value="Etudiant">Étudiant</option>
+                <option value="Professeur">Professeur</option>
+                <option value="Personnel administratif">Personnel administratif</option>
               </select>
             </div>
+
+            {!isEditMode && (
+              <div className="grid gap-2">
+                <Label htmlFor="password">Mot de passe</Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Mot de passe"
+                  required
+                />
+              </div>
+            )}
           </div>
 
           <DialogFooter>

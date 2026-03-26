@@ -1,6 +1,5 @@
 import {
   Mail,
-  Phone,
   Building2,
   UserCircle2,
   ShieldCheck,
@@ -18,17 +17,27 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+
+const ROLE_LABELS = {
+  Etudiant: "Étudiant",
+  Professeur: "Professeur",
+  "Personnel administratif": "Personnel administratif",
+};
 
 export default function ProfilePage() {
+  const { user: authUser, logout } = useAuth();
+  const navigate = useNavigate();
+
   const user = {
-    fullName: "Don Bosenga",
-    email: "don@example.com",
-    phone: "+243 000 000 000",
-    role: "Super administrateur",
+    fullName: authUser?.full_name ?? "—",
+    email: authUser?.email ?? "—",
+    role: ROLE_LABELS[authUser?.user_type] ?? authUser?.user_type ?? "—",
     status: "Actif",
     institution: "Dakar Institute of Technology",
     department: "Bibliothèque numérique",
-    joinedAt: "14 mars 2026",
+    joinedAt: "—",
   };
 
   const activities = [
@@ -50,11 +59,12 @@ export default function ProfilePage() {
   ];
 
   const handleChangePassword = () => {
-    console.log("Changer le mot de passe");
+    // à implémenter
   };
 
   const handleLogout = () => {
-    console.log("Déconnexion");
+    logout();
+    navigate("/login");
   };
 
   return (
@@ -142,11 +152,11 @@ export default function ProfilePage() {
 
                 <div className="rounded-2xl border border-slate-200/40 bg-slate-50/60 p-4">
                   <div className="flex items-start gap-3">
-                    <Phone className="mt-0.5 h-4 w-4 text-[#154854]" />
+                    <Mail className="mt-0.5 h-4 w-4 text-[#154854]" />
                     <div>
-                      <p className="text-sm text-slate-500">Téléphone</p>
+                      <p className="text-sm text-slate-500">Type de compte</p>
                       <p className="mt-1 font-medium text-slate-900">
-                        {user.phone}
+                        {user.role}
                       </p>
                     </div>
                   </div>

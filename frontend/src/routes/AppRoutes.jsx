@@ -7,15 +7,22 @@ import BooksPage from "@/pages/BooksPage";
 import UsersPage from "@/pages/UsersPage";
 import LoansPage from "@/pages/LoansPage";
 import ProfilePage from "@/pages/ProfilePage";
+import { useAuth } from "@/context/AuthContext";
+
+const ROLE_MAP = {
+  Etudiant: "etudiant",
+  Professeur: "agent_bibliotheque",
+  "Personnel administratif": "super_admin",
+};
 
 export default function AppRoutes() {
-  const isAuthenticated = false;
+  const { user, token } = useAuth();
+  const isAuthenticated = !!token;
 
-  const currentUser = {
-    nom: "Don Bosenga",
-    email: "don@example.com",
-    role: "super_admin",
-  };
+  const role = user ? (ROLE_MAP[user.user_type] ?? "etudiant") : "etudiant";
+  const currentUser = user
+    ? { nom: user.full_name, email: user.email, role }
+    : null;
 
   return (
     <Routes>
@@ -37,7 +44,7 @@ export default function AppRoutes() {
               element={
                 <RoleGuard
                   userRole={currentUser.role}
-                  allowedRoles={["super_admin", "agent_bibliotheque"]}
+                  allowedRoles={["super_admin", "agent_bibliotheque", "etudiant"]}
                 >
                   <BooksPage />
                 </RoleGuard>
@@ -49,7 +56,7 @@ export default function AppRoutes() {
               element={
                 <RoleGuard
                   userRole={currentUser.role}
-                  allowedRoles={["super_admin", "gestion_utilisateurs"]}
+                  allowedRoles={["super_admin"]}
                 >
                   <UsersPage />
                 </RoleGuard>
@@ -61,7 +68,7 @@ export default function AppRoutes() {
               element={
                 <RoleGuard
                   userRole={currentUser.role}
-                  allowedRoles={["super_admin", "agent_bibliotheque"]}
+                  allowedRoles={["super_admin", "agent_bibliotheque", "etudiant"]}
                 >
                   <LoansPage />
                 </RoleGuard>
