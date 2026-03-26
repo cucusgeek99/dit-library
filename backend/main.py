@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-import crud.student as crud_student
 import crud.book as crud_book
 import crud.borrow as ops_borrow
 import crud.user as ops_user
