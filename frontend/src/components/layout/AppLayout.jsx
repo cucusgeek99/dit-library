@@ -2,18 +2,20 @@ import { Outlet } from "react-router-dom";
 import { useState } from "react";
 import AppNavbar from "./AppNavbar";
 import AppSidebar from "./AppSidebar";
+import { clearAuthData } from "@/lib/auth";
 
 export default function AppLayout({
-  role = "super_admin",
+  role = "etudiant",
   user = {
-    nom: "Don Bosenga",
-    email: "don@example.com",
+    nom: "Utilisateur",
+    email: "",
   },
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = () => {
-    console.log("User logged out");
+    clearAuthData();
+    window.location.href = "/login";
   };
 
   return (

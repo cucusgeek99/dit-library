@@ -4,30 +4,60 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/context/AuthContext";
+import { loginUser } from "@/services/authService";
+import { saveAuthData } from "@/lib/auth";
 
 export default function LoginForm() {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({ email: "", password: "" });
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrorMessage("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
     setLoading(true);
+    setErrorMessage("");
+
     try {
-      await login({ email: formData.email, password: formData.password });
-      navigate("/");
-    } catch {
-      setError("Identifiants incorrects. Vérifiez votre e-mail et mot de passe.");
+      const payload = {
+        email: formData.email,
+        password: formData.password,
+      };
+
+      const data = await loginUser(payload);
+
+      saveAuthData({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+        token_type: data.token_type,
+        user: data.user,
+      });
+
+      window.location.href = "/books";
+    } catch (error) {
+      console.error("Erreur de connexion :", error);
+
+      const detail = error.response?.data?.detail;
+
+      if (typeof detail === "string") {
+        setErrorMessage(detail);
+      } else if (Array.isArray(detail) && detail.length > 0) {
+        setErrorMessage(detail[0]?.msg || "Requête invalide.");
+      } else {
+        setErrorMessage("Impossible de se connecter au serveur.");
+      }
     } finally {
       setLoading(false);
     }
@@ -92,6 +122,12 @@ export default function LoginForm() {
           </div>
         </div>
 
+        {errorMessage && (
+          <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
+            {errorMessage}
+          </div>
+        )}
+
         <div className="flex items-center justify-between text-sm">
           <label className="flex items-center gap-2 text-slate-500">
             <input type="checkbox" className="rounded border-slate-300" />
@@ -115,9 +151,9 @@ export default function LoginForm() {
         <Button
           type="submit"
           disabled={loading}
-          className="h-12 w-full rounded-2xl bg-[#154854] text-base font-medium text-white hover:bg-[#123e48] disabled:opacity-60"
+          className="h-12 w-full rounded-2xl bg-[#154854] text-base font-medium text-white hover:bg-[#123e48]"
         >
-          {loading ? "Connexion..." : "Se connecter"}
+          {loading ? "Connexion en cours..." : "Se connecter"}
         </Button>
       </form>
 

@@ -7,26 +7,23 @@ import BooksPage from "@/pages/BooksPage";
 import UsersPage from "@/pages/UsersPage";
 import LoansPage from "@/pages/LoansPage";
 import ProfilePage from "@/pages/ProfilePage";
-import { useAuth } from "@/context/AuthContext";
-
-const ROLE_MAP = {
-  Etudiant: "etudiant",
-  Professeur: "agent_bibliotheque",
-  "Personnel administratif": "super_admin",
-};
+import { getStoredUser, isAuthenticated } from "@/lib/auth";
 
 export default function AppRoutes() {
-  const { user, token } = useAuth();
-  const isAuthenticated = !!token;
+  const authenticated = isAuthenticated();
+  const storedUser = getStoredUser();
 
-  const role = user ? (ROLE_MAP[user.user_type] ?? "etudiant") : "etudiant";
-  const currentUser = user
-    ? { nom: user.full_name, email: user.email, role }
+  const currentUser = storedUser
+    ? {
+        nom: storedUser.full_name,
+        email: storedUser.email,
+        role: storedUser.user_type,
+      }
     : null;
 
   return (
     <Routes>
-      {!isAuthenticated ? (
+      {!authenticated ? (
         <>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
@@ -37,14 +34,18 @@ export default function AppRoutes() {
           <Route
             element={<AppLayout role={currentUser.role} user={currentUser} />}
           >
-            <Route path="/" element={<Navigate to="/books" replace />} />
+            {/* <Route path="/" element={<HomePage />} /> */}
 
             <Route
               path="/books"
               element={
                 <RoleGuard
                   userRole={currentUser.role}
-                  allowedRoles={["super_admin", "agent_bibliotheque", "etudiant"]}
+                  allowedRoles={[
+                    "Personnel administratif",
+                    "Professeur",
+                    "Etudiant",
+                  ]}
                 >
                   <BooksPage />
                 </RoleGuard>
@@ -56,7 +57,7 @@ export default function AppRoutes() {
               element={
                 <RoleGuard
                   userRole={currentUser.role}
-                  allowedRoles={["super_admin"]}
+                  allowedRoles={["Personnel administratif"]}
                 >
                   <UsersPage />
                 </RoleGuard>
@@ -68,7 +69,7 @@ export default function AppRoutes() {
               element={
                 <RoleGuard
                   userRole={currentUser.role}
-                  allowedRoles={["super_admin", "agent_bibliotheque", "etudiant"]}
+                  allowedRoles={["Personnel administratif", "Etudiant"]}
                 >
                   <LoansPage />
                 </RoleGuard>
