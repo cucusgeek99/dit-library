@@ -34,8 +34,8 @@ def index():
     return {"message": "Bienvenue à la DIT Library API! Rendez-vous à la page", "docs": "http://127.0.0.1:8000/docs/"}
 
 # ================ CONFIG DES ROLES =====================
-ROLE_ETUDIANT = ["Etudiant"]
-ROLE_PERS_ADMIN = ["Personnel administratif", "Professeur"]
+ROLE_EMPRUNTEUR = ["Etudiant", "Professeur", "Personnel administratif"]
+ROLE_PERS_ADMIN = ["Personnel administratif"]
 
 #=================================
 # Routes pour les statistiques
@@ -259,19 +259,28 @@ def delete_book_by_id(book_id: int, db: Session = Depends(get_db), _ = Depends(R
 # Routes pour les emprunts
 # ===================================
 @app.post("/borrow/create", tags=["Emprunts"])
-def create_borrow(borrow: BorrowCreate, db: Session = Depends(get_db), _ = Depends(RoleChecker(ROLE_ETUDIANT))):
-    try:
-        result = ops_borrow.create_borrow(db, borrow)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la création de l'emprunt : {str(e)}")
+def create_borrow(
+    borrow: BorrowCreate,
+    db: Session = Depends(get_db),
+    _ = Depends(RoleChecker(ROLE_EMPRUNTEUR))
+):
+    return ops_borrow.create_borrow(db, borrow)
     
 @app.get("/borrows", tags=["Emprunts"])
-def get_borrows(db: Session = Depends(get_db)):
+def get_borrows(
+    db: Session = Depends(get_db),
+    current_user: UserDB = Depends(get_current_user)
+):
     try:
-        return ops_borrow.get_borrows(db)
+        if current_user.user_type == "Personnel administratif":
+            return ops_borrow.get_borrows(db)
+        else:
+            return ops_borrow.get_borrow_by_user_id(db, current_user.id)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des emprunts {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur lors de la récupération des emprunts {e}"
+        )
 
 @app.get("/borrow/{borrow_id}", tags=["Emprunts"])
 def get_borrow_by_id(borrow_id: int, db: Session = Depends(get_db)):
@@ -304,11 +313,14 @@ def delete_borrow_by_id(borrow_id: int, db: Session = Depends(get_db), _ = Depen
         raise HTTPException(status_code=500, detail="Erreur lors de la suppression de l'emprunt")
     
 @app.get("/borrows/returned", tags=["Emprunts"])
-def get_returned_borrows(db: Session = Depends(get_db), _ = Depends(RoleChecker([ROLE_PERS_ADMIN]))):
+def get_returned_borrows(
+    db: Session = Depends(get_db),
+    _ = Depends(RoleChecker(ROLE_PERS_ADMIN))
+):
     try:
         borrows = ops_borrow.get_returned_borrows(db)
         if not borrows or len(borrows) == 0:
-            return {"message": "Aucun emprunt retourné trouvé"}            
+            return {"message": "Aucun emprunt retourné trouvé"}
         return borrows
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des emprunts retournés : {str(e)}")
@@ -334,11 +346,13 @@ def get_borrow_by_book_id(book_id: int, db: Session = Depends(get_db), _ = Depen
         raise HTTPException(status_code=500, detail="Erreur lors de la récupération des emprunts pour le livre")
     
 @app.post("/borrow/{book_id}/{std_id}/return", tags=["Emprunts"])
-def return_borrow(book_id: int, std_id: int, db: Session = Depends(get_db), _ = Depends(RoleChecker(ROLE_ETUDIANT))):
-    try:
-        borrow= ops_borrow.return_borrow(db, book_id, std_id)
-        if not borrow:
-            raise HTTPException(status_code=404, detail="Aucun emprunt trouvé pour ce livre")
-        return borrow
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur lors de l'enregistrement du retour du prêt du livre {str(e)}")
+def return_borrow(
+    book_id: int,
+    std_id: int,
+    db: Session = Depends(get_db),
+    _ = Depends(RoleChecker(ROLE_EMPRUNTEUR))
+):
+    borrow = ops_borrow.return_borrow(db, book_id, std_id)
+    if not borrow:
+        raise HTTPException(status_code=404, detail="Aucun emprunt trouvé pour ce livre")
+    return borrow
