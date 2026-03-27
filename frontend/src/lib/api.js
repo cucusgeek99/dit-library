@@ -33,10 +33,19 @@ export const deleteUser = (id) =>
   api.delete(`/user/${id}/delete`).then((r) => r.data);
 
 // Borrows
-export const getBorrows = () => api.get("/borrows").then((r) => r.data);
-export const createBorrow = (data) =>
-  api.post("/borrow/create", data).then((r) => r.data);
-export const returnBorrow = (bookId, stdId) =>
-  api.post(`/borrow/${bookId}/${stdId}/return`).then((r) => r.data);
+export const getBorrows = async () => {
+  const res = await api.get("/borrows");
+  return res.data;
+};
+
+export const createBorrow = async (payload) => {
+  const res = await api.post("/borrow/create", payload);
+  return res.data;
+};
+
+export const returnBorrow = async (bookId, userId) => {
+  const res = await api.post(`/borrow/${bookId}/${userId}/return`);
+  return res.data;
+};
 
 export default api;

@@ -10,13 +10,27 @@ import LoansTable from "@/components/loans/LoansTable";
 import InfoCard from "@/components/common/InfoCard";
 import TablePagination from "@/components/common/TablePagination";
 import { Input } from "@/components/ui/input";
-import { getBorrows, createBorrow, returnBorrow, getBooks, getUsers } from "@/lib/api";
+import {
+  getBorrows,
+  createBorrow,
+  returnBorrow,
+  getBooks,
+  getUsers,
+} from "@/lib/api";
+import { getStoredUser } from "@/lib/auth";
 
 const ITEMS_PER_PAGE = 5;
 
 function loanStatus(b) {
   if (b.is_returned) return "Retourné";
-  return "En cours";
+
+  const borrowDate = b.borrow_date ? new Date(b.borrow_date) : null;
+  if (!borrowDate) return "En cours";
+
+  const today = new Date();
+  const diffInDays = Math.floor((today - borrowDate) / (1000 * 60 * 60 * 24));
+
+  return diffInDays > 14 ? "En retard" : "En cours";
 }
 
 function mapLoan(b, booksMap, usersMap) {
@@ -27,7 +41,8 @@ function mapLoan(b, booksMap, usersMap) {
     bookTitle: booksMap[b.book_id] ?? `Livre #${b.book_id}`,
     borrowerName: usersMap[b.user_id] ?? `Utilisateur #${b.user_id}`,
     startDate: b.borrow_date ? b.borrow_date.slice(0, 10) : null,
-    returnDate: b.is_returned && b.return_date ? b.return_date.slice(0, 10) : null,
+    returnDate:
+      b.is_returned && b.return_date ? b.return_date.slice(0, 10) : null,
     status: loanStatus(b),
   };
 }
@@ -39,12 +54,21 @@ export default function LoansPage() {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
+  const currentUser = getStoredUser();
+  const isAdmin = currentUser?.user_type === "Personnel administratif";
+  const canBorrow = [
+    "Personnel administratif",
+    "Professeur",
+    "Etudiant",
+  ].includes(currentUser?.user_type);
+
   const fetchLoans = async (booksMap = {}, usersMap = {}) => {
     try {
       const data = await getBorrows();
       setLoans(data.map((b) => mapLoan(b, booksMap, usersMap)));
-    } catch {
-      // empty on error
+    } catch (e) {
+      console.error("Erreur récupération emprunts", e);
+      console.error("Réponse backend :", e?.response?.data);
     }
   };
 
@@ -53,8 +77,14 @@ export default function LoansPage() {
       ([booksData, usersData]) => {
         setBooks(booksData);
         setUsers(usersData);
-        const booksMap = Object.fromEntries(booksData.map((b) => [b.id, b.title]));
-        const usersMap = Object.fromEntries(usersData.map((u) => [u.id, u.full_name]));
+
+        const booksMap = Object.fromEntries(
+          booksData.map((b) => [b.id, b.title])
+        );
+        const usersMap = Object.fromEntries(
+          usersData.map((u) => [u.id, u.full_name])
+        );
+
         fetchLoans(booksMap, usersMap);
       }
     );
@@ -96,26 +126,36 @@ export default function LoansPage() {
       await createBorrow({
         book_id: loanData.bookId,
         user_id: loanData.userId,
-        borrow_date: loanData.borrowDate,
+        borrow_date: `${loanData.borrowDate}T00:00:00`,
       });
+
       const booksMap = Object.fromEntries(books.map((b) => [b.id, b.title]));
-      const usersMap = Object.fromEntries(users.map((u) => [u.id, u.full_name]));
+      const usersMap = Object.fromEntries(
+        users.map((u) => [u.id, u.full_name])
+      );
       await fetchLoans(booksMap, usersMap);
     } catch (e) {
       console.error("Erreur création emprunt", e);
+      console.error("Réponse backend :", e?.response?.data);
+      alert(e?.response?.data?.detail || "Impossible de créer l'emprunt.");
     }
   };
 
   const handleReturnLoan = async (id) => {
     const loan = loans.find((l) => l.id === id);
     if (!loan) return;
+
     try {
       await returnBorrow(loan.bookId, loan.userId);
       const booksMap = Object.fromEntries(books.map((b) => [b.id, b.title]));
-      const usersMap = Object.fromEntries(users.map((u) => [u.id, u.full_name]));
+      const usersMap = Object.fromEntries(
+        users.map((u) => [u.id, u.full_name])
+      );
       await fetchLoans(booksMap, usersMap);
     } catch (e) {
       console.error("Erreur retour emprunt", e);
+      console.error("Réponse backend :", e?.response?.data);
+      alert(e?.response?.data?.detail || "Impossible de retourner l'emprunt.");
     }
   };
 
@@ -131,7 +171,15 @@ export default function LoansPage() {
           </p>
         </div>
 
-        <AddLoanDialog onSaveLoan={handleSaveLoan} books={books} users={users} />
+        {canBorrow && (
+          <AddLoanDialog
+            onSaveLoan={handleSaveLoan}
+            books={books}
+            users={users}
+            currentUser={currentUser}
+            isAdmin={isAdmin}
+          />
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

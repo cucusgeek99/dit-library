@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,24 +15,42 @@ import {
 const selectClass =
   "flex h-10 w-full rounded-xl border border-slate-200/70 bg-background px-3 py-2 text-sm outline-none focus:border-[#154854]";
 
-export default function AddLoanDialog({ onSaveLoan, books = [], users = [] }) {
+export default function AddLoanDialog({
+  onSaveLoan,
+  books = [],
+  users = [],
+  currentUser,
+  isAdmin = false,
+}) {
   const today = new Date().toISOString().slice(0, 10);
   const [open, setOpen] = useState(false);
   const [bookId, setBookId] = useState("");
   const [userId, setUserId] = useState("");
   const [borrowDate, setBorrowDate] = useState(today);
 
+  useEffect(() => {
+    if (!isAdmin && currentUser?.id) {
+      setUserId(String(currentUser.id));
+    }
+  }, [isAdmin, currentUser]);
+
   const handleClose = () => {
     setOpen(false);
     setBookId("");
-    setUserId("");
     setBorrowDate(today);
+    setUserId(!isAdmin && currentUser?.id ? String(currentUser.id) : "");
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!bookId || !userId || !borrowDate) return;
-    onSaveLoan({ bookId: Number(bookId), userId: Number(userId), borrowDate });
+
+    onSaveLoan({
+      bookId: Number(bookId),
+      userId: Number(userId),
+      borrowDate,
+    });
+
     handleClose();
   };
 
@@ -51,7 +69,7 @@ export default function AddLoanDialog({ onSaveLoan, books = [], users = [] }) {
         <DialogHeader>
           <DialogTitle>Ajouter un emprunt</DialogTitle>
           <DialogDescription>
-            Sélectionnez le livre et l’étudiant pour créer un emprunt.
+            Sélectionnez le livre à emprunter.
           </DialogDescription>
         </DialogHeader>
 
@@ -59,6 +77,12 @@ export default function AddLoanDialog({ onSaveLoan, books = [], users = [] }) {
           <div className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="bookId">Livre</Label>
+              {books.filter((b) => b.is_available && (b.total_copies ?? 0) > 0)
+                .length === 0 && (
+                <p className="text-sm text-red-500">
+                  Aucun livre disponible pour le moment.
+                </p>
+              )}
               <select
                 id="bookId"
                 value={bookId}
@@ -67,11 +91,13 @@ export default function AddLoanDialog({ onSaveLoan, books = [], users = [] }) {
                 required
               >
                 <option value="">— Sélectionner un livre —</option>
-                {books.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.title}
-                  </option>
-                ))}
+                {books
+                  .filter((b) => b.is_available && (b.total_copies ?? 0) > 0)
+                  .map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.title} ({b.total_copies} dispo)
+                    </option>
+                  ))}
               </select>
             </div>
 
@@ -86,23 +112,34 @@ export default function AddLoanDialog({ onSaveLoan, books = [], users = [] }) {
               />
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="userId">Emprunteur</Label>
-              <select
-                id="userId"
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
-                className={selectClass}
-                required
-              >
-                <option value="">— Sélectionner un utilisateur —</option>
-                {users.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.full_name} ({u.user_type})
-                  </option>
-                ))}
-              </select>
-            </div>
+            {isAdmin ? (
+              <div className="grid gap-2">
+                <Label htmlFor="userId">Emprunteur</Label>
+                <select
+                  id="userId"
+                  value={userId}
+                  onChange={(e) => setUserId(e.target.value)}
+                  className={selectClass}
+                  required
+                >
+                  <option value="">— Sélectionner un utilisateur —</option>
+                  {users.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.full_name} ({u.user_type})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div className="grid gap-2">
+                <Label>Emprunteur</Label>
+                <Input
+                  value={currentUser?.full_name || ""}
+                  disabled
+                  className="bg-slate-50"
+                />
+              </div>
+            )}
           </div>
 
           <DialogFooter>
