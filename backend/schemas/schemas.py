@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional
 
 from pydantic import BaseModel, EmailStr, Field
-from datetime import date
+from datetime import date, datetime
 from enum import Enum
 
 
@@ -74,8 +74,8 @@ class BookUpdate(BaseModel):
 class BorrowSchema(BaseModel):
     user_id: int
     book_id: int
-    borrow_date: date
-    return_date: date | None = None
+    borrow_date: datetime
+    return_date: datetime | None = None
     is_returned: bool = Field(default=False)
     date_created: date = Field(default_factory=date.today)
     date_updated: date | None = None
@@ -86,7 +86,7 @@ class BorrowSchema(BaseModel):
 class BorrowCreate(BaseModel):
     user_id: int
     book_id: int
-    borrow_date: date
+    borrow_date: datetime
     date_created: date = Field(default_factory=date.today)
 
     class Config:
