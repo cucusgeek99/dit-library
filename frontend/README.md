@@ -90,13 +90,23 @@ La déconnexion efface le `localStorage` et redirige vers `/login`.
 
 ## Connexion au backend
 
-Toutes les requêtes sont envoyées à `http://localhost:8000`.
-La configuration se trouve dans `src/lib/api.js`.
+L'URL du backend est contrôlée par la variable d'environnement `VITE_API_URL` (injectée à la compilation).
 
-Pour modifier l'URL du backend, changer `baseURL` dans ce fichier :
+| Contexte       | Valeur de `VITE_API_URL`  | Comportement                              |
+|----------------|---------------------------|-------------------------------------------|
+| Développement  | _(non définie)_           | Requêtes vers `http://localhost:8000`     |
+| Docker (prod)  | `/api`                    | Requêtes proxifiées par Nginx → backend   |
+
+Configuration dans `src/lib/api.js` :
 
 ```js
 const api = axios.create({
-  baseURL: "http://localhost:8000",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000",
 });
+```
+
+Pour changer l'URL en développement, créer un fichier `.env.local` :
+
+```env
+VITE_API_URL=http://mon-serveur:8000
 ```

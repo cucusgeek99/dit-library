@@ -150,7 +150,14 @@ from models.models import *
 target_metadata = Base.metadata
 ```
 
-`alembic.ini` — chaîne de connexion :
+La chaîne de connexion est lue depuis la variable d'environnement `DATABASE_URL` (avec fallback local) :
+
+```python
+database_url = os.getenv(
+    "DATABASE_URL",
+    "mysql+mysqlconnector://admin:admin123@localhost:3306/dit-library-bd"
+)
+config.set_main_option("sqlalchemy.url", database_url)
 ```
-sqlalchemy.url = mysql+mysqlconnector://admin:admin123@localhost:3306/dit-library-bd
-```
+
+En production Docker, `DATABASE_URL` est injectée par `docker-compose.yml` et pointe vers le service `db`.

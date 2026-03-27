@@ -7,8 +7,18 @@ Monorepo contenant le backend (API REST FastAPI) et le frontend (React + Vite).
 
 ```
 devops_exam/
-├── backend/    # API FastAPI (Python 3)
-└── frontend/   # Application React (Vite + Tailwind + ShadCN UI)
+├── backend/          # API FastAPI (Python 3)
+├── frontend/         # Application React (Vite + Tailwind + ShadCN UI)
+├── docker-compose.yml
+└── Jenkinsfile       # Pipeline CI/CD Jenkins
+```
+
+### Flux Docker (production)
+
+```
+Browser → Nginx:80
+  ├── GET /          → React SPA (fichiers statiques)
+  └── ANY /api/...   → proxy → backend:8000 → MySQL:3306
 ```
 
 ---
@@ -17,13 +27,26 @@ devops_exam/
 
 - Python 3.10+
 - Node.js 18+
-- Docker (pour MySQL)
+- Docker + Docker Compose
 
 ---
 
 ## Démarrage rapide
 
-### 1. Lancer MySQL via Docker
+### Option A — Docker Compose (stack complète)
+
+```bash
+docker-compose up --build
+```
+
+| Service  | URL                              |
+|----------|----------------------------------|
+| Frontend | http://localhost                 |
+| Backend  | http://localhost:8000/docs       |
+
+### Option B — Développement local
+
+#### 1. Lancer MySQL via Docker
 
 ```bash
 docker network create dit-library
@@ -37,19 +60,9 @@ docker run -d \
   -e MYSQL_PASSWORD=admin123 \
   -p 3306:3306 \
   mysql:8.4
-
-# Interface d'administration (optionnel)
-docker run -d \
-  --name phpmyadmin \
-  --network dit-library \
-  -e PMA_HOST=mysql_server \
-  -p 8081:80 \
-  phpmyadmin:latest
 ```
 
-> phpMyAdmin disponible sur http://localhost:8081 — utilisateur : `root`, mot de passe : `admin123`
-
-### 2. Backend
+#### 2. Backend
 
 ```bash
 cd backend
@@ -65,10 +78,9 @@ alembic upgrade head
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-API disponible sur http://localhost:8000
-Documentation interactive : http://localhost:8000/docs
+API disponible sur http://localhost:8000 — Swagger : http://localhost:8000/docs
 
-### 3. Frontend
+#### 3. Frontend
 
 ```bash
 cd frontend
@@ -110,9 +122,23 @@ curl -X POST http://localhost:8000/user/create \
 
 ## Ports utilisés
 
-| Service    | Port |
-|------------|------|
-| Backend    | 8000 |
-| Frontend   | 5173 |
-| MySQL      | 3306 |
-| phpMyAdmin | 8081 |
+| Service           | Dev local | Docker Compose |
+|-------------------|-----------|----------------|
+| Frontend (Nginx)  | 5173      | 80             |
+| Backend (FastAPI) | 8000      | 8000           |
+| MySQL             | 3306      | 3306 (interne) |
+
+---
+
+## CI/CD Jenkins
+
+Le fichier `Jenkinsfile` à la racine définit un pipeline déclaratif avec 6 stages :
+
+1. **Checkout** — récupération du code source
+2. **Build Backend** — création du virtualenv Python + installation des dépendances
+3. **Lint Backend** — vérification syntaxique des fichiers Python (`py_compile`)
+4. **Build Frontend** — `npm ci` + `npm run lint` + `npm run build`
+5. **Docker Build** — construction des images backend et frontend
+6. **Deploy** — déploiement via `docker-compose up -d --build`
+
+Pour utiliser Jenkins, créer un pipeline pointant sur ce dépôt (Pipeline from SCM).
