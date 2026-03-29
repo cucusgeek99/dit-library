@@ -6,7 +6,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 # Si elle n'existe pas, utilise localhost (pour le développement local)
 SQLALCHEMY_DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "mysql+mysqlconnector://admin:admin123@localhost:3306/dit-library-bd"
+    "mysql+mysqlconnector://dituser:password@localhost:3306/dit_library"
 )
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)

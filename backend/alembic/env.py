@@ -17,7 +17,7 @@ config = context.config
 # Cela permet à Alembic de se connecter au bon serveur dans Docker
 database_url = os.getenv(
     "DATABASE_URL",
-    "mysql+mysqlconnector://admin:admin123@localhost:3306/dit-library-bd"
+    "mysql+mysqlconnector://dituser:password@localhost:3306/dit_library"
 )
 config.set_main_option("sqlalchemy.url", database_url)
 

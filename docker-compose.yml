@@ -5,10 +5,10 @@ services:
     image: mysql:8.0
     container_name: dit-db
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-admin123}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-dit-library-bd}
-      MYSQL_USER: ${MYSQL_USER:-admin}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-admin123}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-dit_library}
+      MYSQL_USER: ${MYSQL_USER:-dituser}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-password}
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
@@ -30,7 +30,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=mysql+mysqlconnector://${MYSQL_USER:-admin}:${MYSQL_PASSWORD:-admin123}@db:3306/${MYSQL_DATABASE:-dit-library-bd}
+      - DATABASE_URL=mysql+mysqlconnector://${MYSQL_USER:-dituser}:${MYSQL_PASSWORD:-password}@db:3306/${MYSQL_DATABASE:-dit_library}
       - SECRET_KEY=${SECRET_KEY:-changeme_secret_key}
     depends_on:
       db:
